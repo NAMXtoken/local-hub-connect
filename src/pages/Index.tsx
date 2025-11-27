@@ -17,6 +17,7 @@ const featuredBusinesses = [
     distance: "1.2 km",
     priceRange: 2,
     isOpen: true,
+    bumps: 342,
   },
   {
     id: "2",
@@ -29,6 +30,7 @@ const featuredBusinesses = [
     distance: "2.5 km",
     priceRange: 3,
     isOpen: true,
+    bumps: 567,
   },
   {
     id: "3",
@@ -41,6 +43,7 @@ const featuredBusinesses = [
     distance: "3.1 km",
     priceRange: 3,
     isOpen: false,
+    bumps: 289,
   },
 ];
 

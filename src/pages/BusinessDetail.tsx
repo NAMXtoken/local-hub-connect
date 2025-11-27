@@ -2,8 +2,9 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, Clock, Star, DollarSign, Globe, Mail, Share2 } from "lucide-react";
+import { MapPin, Phone, Clock, Star, DollarSign, Globe, Mail, Share2, Heart, Instagram, Facebook } from "lucide-react";
 import { useParams } from "react-router-dom";
+import { useState } from "react";
 
 const BusinessDetail = () => {
   const { id } = useParams();
@@ -29,6 +30,47 @@ const BusinessDetail = () => {
     description: "A modern cafe serving artisanal coffee, fresh pastries, and healthy meals in a contemporary setting. Perfect for work meetings or casual catch-ups with friends.",
     amenities: ["WiFi", "Outdoor Seating", "Pet Friendly", "Parking Available", "Takeaway"],
     isOpen: true,
+    bumps: 342,
+    socialPosts: [
+      {
+        platform: "instagram",
+        image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80",
+        caption: "New seasonal menu launching this week! ☕✨",
+        likes: 234,
+        date: "2 days ago"
+      },
+      {
+        platform: "facebook",
+        image: "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&q=80",
+        caption: "Happy hour specials every Friday 4-7PM 🎉",
+        likes: 156,
+        date: "5 days ago"
+      },
+      {
+        platform: "instagram",
+        image: "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=400&q=80",
+        caption: "Behind the scenes with our amazing baristas 🙌",
+        likes: 189,
+        date: "1 week ago"
+      },
+      {
+        platform: "facebook",
+        image: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&q=80",
+        caption: "Thank you for an incredible year! Here's to more coffee moments ❤️",
+        likes: 412,
+        date: "2 weeks ago"
+      }
+    ]
+  };
+
+  const [bumpCount, setBumpCount] = useState(business.bumps);
+  const [hasBumped, setHasBumped] = useState(false);
+
+  const handleBump = () => {
+    if (!hasBumped) {
+      setBumpCount(prev => prev + 1);
+      setHasBumped(true);
+    }
   };
 
   return (
@@ -112,6 +154,61 @@ const BusinessDetail = () => {
                   <Badge key={amenity} variant="secondary">
                     {amenity}
                   </Badge>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold text-foreground mb-4">Community Love</h2>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-3xl font-bold text-primary">{bumpCount}</p>
+                  <p className="text-sm text-muted-foreground">Total Bumps</p>
+                </div>
+                <Button
+                  size="lg"
+                  onClick={handleBump}
+                  disabled={hasBumped}
+                  variant={hasBumped ? "secondary" : "default"}
+                  className="gap-2"
+                >
+                  <Heart className={`h-5 w-5 ${hasBumped ? "fill-current" : ""}`} />
+                  {hasBumped ? "Bumped!" : "Bump This Business"}
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Show your appreciation for great service and help this business gain visibility in the directory!
+              </p>
+            </Card>
+
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold text-foreground mb-4">Social Media</h2>
+              <div className="grid grid-cols-2 gap-4">
+                {business.socialPosts.map((post, index) => (
+                  <div key={index} className="group cursor-pointer">
+                    <div className="relative aspect-square rounded-lg overflow-hidden mb-2">
+                      <img
+                        src={post.image}
+                        alt={post.caption}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute bottom-2 left-2 right-2">
+                          <div className="flex items-center gap-2 text-white text-sm">
+                            {post.platform === "instagram" ? (
+                              <Instagram className="h-4 w-4" />
+                            ) : (
+                              <Facebook className="h-4 w-4" />
+                            )}
+                            <Heart className="h-4 w-4 fill-current" />
+                            <span>{post.likes}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mb-1">{post.caption}</p>
+                    <p className="text-xs text-muted-foreground">{post.date}</p>
+                  </div>
                 ))}
               </div>
             </Card>

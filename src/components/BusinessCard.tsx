@@ -1,7 +1,9 @@
-import { MapPin, Star, Phone, DollarSign } from "lucide-react";
+import { MapPin, Star, Phone, DollarSign, Heart } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 
 interface BusinessCardProps {
   id: string;
@@ -15,6 +17,7 @@ interface BusinessCardProps {
   priceRange: number;
   phone?: string;
   isOpen?: boolean;
+  bumps: number;
 }
 
 export const BusinessCard = ({
@@ -29,9 +32,21 @@ export const BusinessCard = ({
   priceRange,
   phone,
   isOpen = true,
+  bumps,
 }: BusinessCardProps) => {
+  const [bumpCount, setBumpCount] = useState(bumps);
+  const [hasBumped, setHasBumped] = useState(false);
+
+  const handleBump = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!hasBumped) {
+      setBumpCount(prev => prev + 1);
+      setHasBumped(true);
+    }
+  };
+
   return (
-    <Link to={`/business/${id}`}>
+    <Link to={`/business/${id}`} className="block">
       <Card className="overflow-hidden hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 group">
         <div className="relative h-48 overflow-hidden">
           <img
@@ -85,6 +100,20 @@ export const BusinessCard = ({
               ))}
             </div>
             <span className="text-xs text-muted-foreground">{reviews} reviews</span>
+          </div>
+
+          <div className="flex items-center justify-between mt-3 pt-3 border-t">
+            <span className="text-sm text-muted-foreground">{bumpCount} bumps</span>
+            <Button
+              variant={hasBumped ? "secondary" : "default"}
+              size="sm"
+              onClick={handleBump}
+              disabled={hasBumped}
+              className="gap-1"
+            >
+              <Heart className={`h-4 w-4 ${hasBumped ? "fill-current" : ""}`} />
+              {hasBumped ? "Bumped!" : "Bump"}
+            </Button>
           </div>
         </div>
       </Card>
