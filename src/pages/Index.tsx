@@ -1,9 +1,53 @@
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { CategoryGrid } from "@/components/CategoryGrid";
+import { Leaderboard } from "@/components/Leaderboard";
 import { BusinessCard } from "@/components/BusinessCard";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+
+const leaderboardData = {
+  "Restaurants": [
+    { id: "1", name: "Gourmet Bistro", bumps: 892, category: "Restaurants", image: "", rating: 4.7 },
+    { id: "2", name: "Ocean View Restaurant", bumps: 756, category: "Restaurants", image: "", rating: 4.6 },
+    { id: "3", name: "The Italian Corner", bumps: 643, category: "Restaurants", image: "", rating: 4.5 },
+  ],
+  "Shopping": [
+    { id: "4", name: "Boutique Fashion", bumps: 678, category: "Shopping", image: "", rating: 4.8 },
+    { id: "5", name: "Local Artisan Market", bumps: 589, category: "Shopping", image: "", rating: 4.7 },
+    { id: "6", name: "Vintage Finds", bumps: 534, category: "Shopping", image: "", rating: 4.6 },
+  ],
+  "Health & Medical": [
+    { id: "7", name: "Elite Fitness Center", bumps: 823, category: "Health & Medical", image: "", rating: 4.8 },
+    { id: "8", name: "Wellness Spa", bumps: 712, category: "Health & Medical", image: "", rating: 4.7 },
+    { id: "9", name: "Family Dental Care", bumps: 598, category: "Health & Medical", image: "", rating: 4.6 },
+  ],
+  "Cafes & Bars": [
+    { id: "10", name: "The Modern Cafe", bumps: 945, category: "Cafes & Bars", image: "", rating: 4.9 },
+    { id: "11", name: "Sunset Lounge", bumps: 834, category: "Cafes & Bars", image: "", rating: 4.7 },
+    { id: "12", name: "Coffee & Co", bumps: 721, category: "Cafes & Bars", image: "", rating: 4.6 },
+  ],
+  "Services": [
+    { id: "13", name: "Premier Cleaning", bumps: 567, category: "Services", image: "", rating: 4.8 },
+    { id: "14", name: "Quick Repairs", bumps: 498, category: "Services", image: "", rating: 4.6 },
+    { id: "15", name: "Professional Movers", bumps: 445, category: "Services", image: "", rating: 4.5 },
+  ],
+  "Retail": [
+    { id: "16", name: "Electronics Plus", bumps: 689, category: "Retail", image: "", rating: 4.7 },
+    { id: "17", name: "Home Essentials", bumps: 612, category: "Retail", image: "", rating: 4.6 },
+    { id: "18", name: "Sports & Outdoors", bumps: 578, category: "Retail", image: "", rating: 4.5 },
+  ],
+  "Home Services": [
+    { id: "19", name: "Expert Plumbing", bumps: 734, category: "Home Services", image: "", rating: 4.8 },
+    { id: "20", name: "Garden Masters", bumps: 656, category: "Home Services", image: "", rating: 4.7 },
+    { id: "21", name: "Handy Repairs", bumps: 589, category: "Home Services", image: "", rating: 4.6 },
+  ],
+  "Automotive": [
+    { id: "22", name: "Auto Care Center", bumps: 812, category: "Automotive", image: "", rating: 4.8 },
+    { id: "23", name: "Quick Tire Service", bumps: 698, category: "Automotive", image: "", rating: 4.7 },
+    { id: "24", name: "Premium Detailing", bumps: 623, category: "Automotive", image: "", rating: 4.6 },
+  ],
+};
 
 const featuredBusinesses = [
   {
@@ -53,6 +97,7 @@ const Index = () => {
       <Header />
       <Hero />
       <CategoryGrid />
+      <Leaderboard businessesByCategory={leaderboardData} />
       
       {/* Featured Businesses */}
       <section className="py-16">
