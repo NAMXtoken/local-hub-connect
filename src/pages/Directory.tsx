@@ -16,6 +16,7 @@ const businesses = [
     priceRange: 2,
     phone: "+1234567890",
     isOpen: true,
+    bumps: 342,
   },
   {
     id: "2",
@@ -28,6 +29,7 @@ const businesses = [
     distance: "2.5 km",
     priceRange: 3,
     isOpen: true,
+    bumps: 567,
   },
   {
     id: "3",
@@ -40,6 +42,7 @@ const businesses = [
     distance: "3.1 km",
     priceRange: 3,
     isOpen: false,
+    bumps: 289,
   },
   {
     id: "4",
@@ -52,6 +55,7 @@ const businesses = [
     distance: "1.8 km",
     priceRange: 2,
     isOpen: true,
+    bumps: 156,
   },
   {
     id: "5",
@@ -64,6 +68,7 @@ const businesses = [
     distance: "2.2 km",
     priceRange: 3,
     isOpen: true,
+    bumps: 423,
   },
   {
     id: "6",
@@ -76,6 +81,7 @@ const businesses = [
     distance: "0.9 km",
     priceRange: 3,
     isOpen: true,
+    bumps: 892,
   },
   {
     id: "7",
@@ -88,6 +94,7 @@ const businesses = [
     distance: "4.5 km",
     priceRange: 2,
     isOpen: true,
+    bumps: 234,
   },
   {
     id: "8",
@@ -100,8 +107,9 @@ const businesses = [
     distance: "1.5 km",
     priceRange: 2,
     isOpen: true,
+    bumps: 678,
   },
-];
+].sort((a, b) => b.bumps - a.bumps);
 
 const Directory = () => {
   return (
