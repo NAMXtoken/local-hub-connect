@@ -11,3 +11,5 @@
 28/11 15:22 Added image download/build scripts and local image preference for listings.
 28/11 16:04 Implemented API/query-driven filtering with server- and client-side fallbacks for listings.
 28/11 16:13 JSON build now rewrites listing images to local /listing-images paths after downloads.
+28/11 16:22 Extended export script + JSON to capture Google Maps embed coordinates for each listing.
+28/11 16:31 Added Mapbox-powered DirectoryMap component with filtered pins and env-driven token.

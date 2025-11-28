@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -76,6 +77,22 @@ def classify_contact(href: str) -> tuple[str, str] | None:
     return None
 
 
+def parse_map_coordinates(src: str) -> tuple[str, str]:
+    match_lng = re.search(r"!2d([\-0-9.]+)", src)
+    match_lat = re.search(r"!3d([\-0-9.]+)", src)
+    longitude = match_lng.group(1) if match_lng else ""
+    latitude = match_lat.group(1) if match_lat else ""
+    return latitude, longitude
+
+
+def parse_place_coordinates(src: str) -> tuple[str, str]:
+    match_lat = re.search(r"!3d([\-0-9.]+)", src)
+    match_lng = re.search(r"!4d([\-0-9.]+)", src)
+    latitude = match_lat.group(1) if match_lat else ""
+    longitude = match_lng.group(1) if match_lng else ""
+    return latitude, longitude
+
+
 def extract_listing(url: str, timeout: float) -> dict[str, str]:
     response = requests.get(url, headers=DEFAULT_HEADERS, timeout=timeout)
     response.raise_for_status()
@@ -108,6 +125,16 @@ def extract_listing(url: str, timeout: float) -> dict[str, str]:
         key, value = classified
         contacts[key].add(value)
 
+    map_iframe = document.xpath("//iframe[contains(@src,'google.com/maps')]/@src")
+    map_embed_url = map_iframe[0].strip() if map_iframe else ""
+    map_latitude, map_longitude = parse_map_coordinates(map_embed_url) if map_embed_url else ("", "")
+
+    map_link = document.xpath("//a[contains(@href,'google.com/maps')]/@href")
+    if map_link:
+        link_lat, link_lng = parse_place_coordinates(map_link[0])
+        if link_lat and link_lng:
+            map_latitude, map_longitude = link_lat, link_lng
+
     def join_set(key: str) -> str:
         values = sorted(contacts.get(key, []))
         return ";".join(values)
@@ -120,6 +147,9 @@ def extract_listing(url: str, timeout: float) -> dict[str, str]:
         "tags": tags[0].strip() if tags else "",
         "address": address,
         "image_url": image[0].strip() if image else "",
+        "map_embed_url": map_embed_url,
+        "map_latitude": map_latitude,
+        "map_longitude": map_longitude,
         "phone": join_set("phone"),
         "whatsapp": join_set("whatsapp"),
         "email": join_set("email"),
@@ -144,6 +174,9 @@ def write_csv(path: Path, rows: list[dict[str, str]]) -> None:
         "tags",
         "address",
         "image_url",
+        "map_embed_url",
+        "map_latitude",
+        "map_longitude",
         "phone",
         "whatsapp",
         "email",

@@ -2,10 +2,11 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, Globe, Mail, Share2, Heart, Instagram, Facebook } from "lucide-react";
+import { MapPin, Phone, Globe, Mail, Share2, Heart, Instagram, Facebook, Map } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useListing } from "@/hooks/use-listings";
+import { BusinessMap } from "@/components/BusinessMap";
 
 const BusinessDetail = () => {
   const { slug } = useParams();
@@ -50,6 +51,16 @@ const BusinessDetail = () => {
     ].filter((entry) => Boolean(entry.href)),
     [listing?.contacts]
   );
+
+  const hasCoordinates = useMemo(() => {
+    const lat = Number(listing?.mapLatitude);
+    const lng = Number(listing?.mapLongitude);
+    return Number.isFinite(lat) && Number.isFinite(lng);
+  }, [listing?.mapLatitude, listing?.mapLongitude]);
+
+  const directionsUrl = hasCoordinates
+    ? `https://www.google.com/maps/dir/?api=1&destination=${listing?.mapLatitude},${listing?.mapLongitude}`
+    : listing?.mapEmbedUrl || listing?.url;
 
   const handleBump = () => {
     if (!hasBumped) {
@@ -236,6 +247,26 @@ const BusinessDetail = () => {
                   )
                 ))}
               </div>
+            </Card>
+
+            <Card className="p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-foreground">Location Map</h2>
+                {directionsUrl && (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    asChild
+                    className="gap-2"
+                  >
+                    <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
+                      <Map className="h-4 w-4" />
+                      Get Directions
+                    </a>
+                  </Button>
+                )}
+              </div>
+              <BusinessMap listing={listing} />
             </Card>
 
             <Card className="p-6">

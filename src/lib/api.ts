@@ -10,6 +10,9 @@ export interface Listing {
   imageUrl: string;
   imageLocalPath?: string;
   remoteImageUrl?: string;
+  mapEmbedUrl?: string;
+  mapLatitude?: string;
+  mapLongitude?: string;
   description: string;
   contacts: Record<string, string[]>;
 }

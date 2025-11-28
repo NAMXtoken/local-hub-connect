@@ -87,6 +87,9 @@ def main() -> int:
                 "imageUrl": local_image or remote_image,
                 "remoteImageUrl": remote_image,
                 "imageLocalPath": local_image or "",
+                "mapEmbedUrl": (row.get("map_embed_url") or "").strip(),
+                "mapLatitude": (row.get("map_latitude") or "").strip(),
+                "mapLongitude": (row.get("map_longitude") or "").strip(),
                 "description": description,
                 "contacts": {
                     "phone": split_list(row.get("phone"), ";"),

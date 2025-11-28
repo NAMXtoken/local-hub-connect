@@ -1,6 +1,7 @@
 import { Header } from "@/components/Header";
 import { FilterSidebar, type FilterState } from "@/components/FilterSidebar";
 import { BusinessCard } from "@/components/BusinessCard";
+import { DirectoryMap } from "@/components/DirectoryMap";
 import { useListings } from "@/hooks/use-listings";
 import { useMemo, useState } from "react";
 
@@ -95,6 +96,10 @@ const Directory = () => {
             {isError && "Unable to load businesses."}
             {!isLoading && !isError && `Showing ${totalCount} businesses`}
           </p>
+        </div>
+
+        <div className="mb-10">
+          <DirectoryMap listings={listingData} />
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">

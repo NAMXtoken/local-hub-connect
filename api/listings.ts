@@ -14,6 +14,9 @@ export interface ListingRecord {
   imageUrl: string;
   imageLocalPath?: string;
   remoteImageUrl?: string;
+  mapEmbedUrl?: string;
+  mapLatitude?: string;
+  mapLongitude?: string;
   description: string;
   contacts: Record<string, string[]>;
 }
