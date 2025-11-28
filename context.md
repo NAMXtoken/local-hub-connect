@@ -13,3 +13,5 @@
 28/11 16:13 JSON build now rewrites listing images to local /listing-images paths after downloads.
 28/11 16:22 Extended export script + JSON to capture Google Maps embed coordinates for each listing.
 28/11 16:31 Added Mapbox-powered DirectoryMap component with filtered pins and env-driven token.
+28/11 18:29 Rebuilt directory UI into TripAdvisor-style layout with sidebar list + full-height map.
+28/11 18:39 Added layout preference context + header toggle to swap between classic and explorer directory UIs.

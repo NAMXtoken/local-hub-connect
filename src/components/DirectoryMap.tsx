@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import type { Listing } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -16,6 +17,8 @@ const VALID_BOUNDS = {
 
 interface DirectoryMapProps {
   listings: Listing[];
+  className?: string;
+  onVisibleListingsChange?: (ids: string[]) => void;
 }
 
 interface MapPoint {
@@ -28,10 +31,11 @@ interface MapPoint {
   image?: string;
 }
 
-export const DirectoryMap = ({ listings }: DirectoryMapProps) => {
+export const DirectoryMap = ({ listings, className, onVisibleListingsChange }: DirectoryMapProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const pointsRef = useRef<MapPoint[]>([]);
 
   const hasBrowser = typeof window !== "undefined";
 
@@ -62,6 +66,10 @@ export const DirectoryMap = ({ listings }: DirectoryMapProps) => {
       })
       .filter((point): point is MapPoint => Boolean(point));
   }, [listings]);
+
+  useEffect(() => {
+    pointsRef.current = points;
+  }, [points]);
 
   useEffect(() => {
     if (!hasBrowser || !containerRef.current || !MAPBOX_TOKEN) {
@@ -118,23 +126,51 @@ export const DirectoryMap = ({ listings }: DirectoryMapProps) => {
       bounds.extend([point.lng, point.lat]);
     });
 
+    const notifyVisible = () => {
+      if (!onVisibleListingsChange) return;
+      const bounds = map.getBounds();
+      const visible = pointsRef.current
+        .filter((pt) => bounds.contains([pt.lng, pt.lat]))
+        .map((pt) => pt.id);
+      onVisibleListingsChange(visible);
+    };
+
+    map.once("idle", notifyVisible);
+    if (onVisibleListingsChange) {
+      map.on("moveend", notifyVisible);
+      map.on("zoomend", notifyVisible);
+    }
+
     if (points.length === 1) {
       map.easeTo({ center: [points[0].lng, points[0].lat], zoom: DEFAULT_ZOOM });
     } else {
       map.fitBounds(bounds, { padding: 60, duration: 800, maxZoom: DEFAULT_ZOOM + 1 });
     }
+
+    return () => {
+      if (onVisibleListingsChange && map) {
+        map.off("moveend", notifyVisible);
+        map.off("zoomend", notifyVisible);
+      }
+    };
   }, [points]);
+
+  const containerClass = cn(
+    "relative h-96 rounded-xl overflow-hidden border",
+    className
+  );
 
   if (!MAPBOX_TOKEN) {
     return (
-      <div className="h-96 rounded-xl border border-dashed flex items-center justify-center text-muted-foreground">
+      <div className={cn(containerClass, "border-dashed flex items-center justify-center text-muted-foreground")}
+>
         Set <code>VITE_MAPBOX_TOKEN</code> to enable the interactive map.
       </div>
     );
   }
 
   return (
-    <div className="relative h-96 rounded-xl overflow-hidden border">
+    <div className={containerClass}>
       <div ref={containerRef} className="w-full h-full" />
       {points.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/60 text-muted-foreground">

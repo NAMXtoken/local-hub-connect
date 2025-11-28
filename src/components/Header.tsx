@@ -2,9 +2,32 @@ import { Search, Menu, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useLayoutPreference } from "@/contexts/layout-preference";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { viewMode, setViewMode } = useLayoutPreference();
+
+  const ViewToggle = (
+    <div className="hidden md:flex items-center gap-1 rounded-full border border-border p-1 bg-background/80">
+      <Button
+        variant={viewMode === "classic" ? "default" : "ghost"}
+        size="sm"
+        className="rounded-full px-3 text-xs"
+        onClick={() => setViewMode("classic")}
+      >
+        Classic
+      </Button>
+      <Button
+        variant={viewMode === "explorer" ? "default" : "ghost"}
+        size="sm"
+        className="rounded-full px-3 text-xs"
+        onClick={() => setViewMode("explorer")}
+      >
+        Explorer
+      </Button>
+    </div>
+  );
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -32,6 +55,8 @@ export const Header = () => {
             </Button>
           </nav>
 
+          {ViewToggle}
+
           <Button
             variant="ghost"
             size="icon"
@@ -57,6 +82,27 @@ export const Header = () => {
               <Button variant="default" size="sm" className="w-full">
                 Add Business
               </Button>
+              <div className="pt-4 border-t border-border">
+                <p className="text-xs font-semibold text-muted-foreground mb-2">Directory view</p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={viewMode === "classic" ? "default" : "secondary"}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setViewMode("classic")}
+                  >
+                    Classic
+                  </Button>
+                  <Button
+                    variant={viewMode === "explorer" ? "default" : "secondary"}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setViewMode("explorer")}
+                  >
+                    Explorer
+                  </Button>
+                </div>
+              </div>
             </nav>
           </div>
         )}
