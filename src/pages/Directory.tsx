@@ -82,7 +82,7 @@ const Directory = () => {
         slug: listing.slug,
         name: listing.name || "Untitled Listing",
         category: listing.primaryCategory || listing.tags[0] || "Local Business",
-        image: listing.imageUrl,
+        image: listing.imageUrl || listing.remoteImageUrl,
         rating: null,
         reviews: null,
         location: listing.location || listing.address || PLACEHOLDER_LOCATION,

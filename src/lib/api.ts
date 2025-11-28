@@ -8,6 +8,8 @@ export interface Listing {
   primaryCategory: string;
   tags: string[];
   imageUrl: string;
+  imageLocalPath?: string;
+  remoteImageUrl?: string;
   description: string;
   contacts: Record<string, string[]>;
 }

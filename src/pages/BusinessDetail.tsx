@@ -21,15 +21,16 @@ const BusinessDetail = () => {
   }, [listing]);
 
   const heroImages = useMemo(() => {
-    if (!listing?.imageUrl) {
+    const preferred = listing?.imageUrl || listing?.remoteImageUrl;
+    if (!preferred) {
       return [
         "https://placehold.co/1200x900?text=Samui+Connect",
         "https://placehold.co/600x400?text=Samui+Connect",
         "https://placehold.co/600x400?text=Samui+Connect",
       ];
     }
-    return [listing.imageUrl, listing.imageUrl, listing.imageUrl];
-  }, [listing?.imageUrl]);
+    return [preferred, preferred, preferred];
+  }, [listing?.imageUrl, listing?.remoteImageUrl]);
 
   const contactGroups = useMemo(
     () => [

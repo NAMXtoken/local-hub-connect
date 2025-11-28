@@ -8,3 +8,4 @@
 28/11 14:50 Wired listings API + frontend to consume sitemap data via Vercel function and build script.
 28/11 14:55 Hooked Directory filters/search to live listings data via FilterSidebar updates.
 28/11 15:04 Restored original filter UI layout and added JSON fallback for local data fetches.
+28/11 15:22 Added image download/build scripts and local image preference for listings.

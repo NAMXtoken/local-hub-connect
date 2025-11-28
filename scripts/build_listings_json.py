@@ -45,7 +45,17 @@ def main() -> int:
         default=Path("public/data/listings.json"),
         help="Optional second path for serving JSON directly to the frontend.",
     )
+    parser.add_argument(
+        "--image-manifest",
+        type=Path,
+        default=Path("public/listing-images/manifest.json"),
+        help="Optional manifest produced by download_listing_images.py",
+    )
     args = parser.parse_args()
+
+    manifest: dict[str, str] = {}
+    if args.image_manifest.exists():
+        manifest = json.loads(args.image_manifest.read_text(encoding="utf-8"))
 
     with args.csv_path.open("r", encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
@@ -55,6 +65,8 @@ def main() -> int:
             name = (row.get("name") or "").strip()
             tags = split_list(row.get("tags"), ",")
             description = (row.get("description") or "").strip()
+            remote_image = (row.get("image_url") or "").strip()
+            local_image = manifest.get(listing_id)
 
             entry = {
                 "id": listing_id,
@@ -65,7 +77,9 @@ def main() -> int:
                 "address": (row.get("address") or "").strip(),
                 "primaryCategory": tags[0] if tags else "",
                 "tags": tags,
-                "imageUrl": (row.get("image_url") or "").strip(),
+                "imageUrl": local_image or remote_image,
+                "remoteImageUrl": remote_image,
+                "imageLocalPath": local_image or "",
                 "description": description,
                 "contacts": {
                     "phone": split_list(row.get("phone"), ";"),
