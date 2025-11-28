@@ -135,8 +135,8 @@ export const DirectoryMap = ({ listings, className, onVisibleListingsChange }: D
       onVisibleListingsChange(visible);
     };
 
-    map.once("idle", notifyVisible);
     if (onVisibleListingsChange) {
+      notifyVisible();
       map.on("moveend", notifyVisible);
       map.on("zoomend", notifyVisible);
     }
@@ -148,7 +148,7 @@ export const DirectoryMap = ({ listings, className, onVisibleListingsChange }: D
     }
 
     return () => {
-      if (onVisibleListingsChange && map) {
+      if (onVisibleListingsChange) {
         map.off("moveend", notifyVisible);
         map.off("zoomend", notifyVisible);
       }

@@ -205,7 +205,7 @@ const Directory = () => {
             </p>
           ) : (
             explorerListings.map((listing, index) => (
-              <DirectoryListItem key={listing.id} listing={listing} rank={index + 1} />
+              <DirectoryListItem key={`${listing.id}-${index}`} listing={listing} rank={index + 1} />
             ))
           )}
         </div>
