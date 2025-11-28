@@ -6,6 +6,7 @@ import { BusinessCard } from "@/components/BusinessCard";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { slugify } from "@/lib/utils";
+import { useListings } from "@/hooks/use-listings";
 
 const withSlugs = <T extends { name: string }>(items: T[]) =>
   items.map((item) => ({ ...item, slug: slugify(item.name) }));
@@ -60,7 +61,7 @@ const leaderboardData = Object.fromEntries(
   ])
 );
 
-const featuredBusinesses = withSlugs([
+const placeholderFeatured = withSlugs([
   {
     id: "1",
     name: "The Modern Cafe",
@@ -103,6 +104,24 @@ const featuredBusinesses = withSlugs([
 ]);
 
 const Index = () => {
+  const { data: listings = [], isLoading } = useListings();
+
+  const featuredBusinesses = listings.length
+    ? listings.slice(0, 3).map((listing) => ({
+        id: listing.id,
+        slug: listing.slug,
+        name: listing.name,
+        category: listing.primaryCategory || listing.tags[0] || "Local Business",
+        image: listing.imageUrl,
+        rating: null,
+        reviews: null,
+        location: listing.location || listing.address || "Koh Samui",
+        priceRange: null,
+        isOpen: true,
+        bumps: 0,
+      }))
+    : placeholderFeatured;
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -119,7 +138,7 @@ const Index = () => {
                 Featured Businesses
               </h2>
               <p className="text-muted-foreground text-lg">
-                Top-rated businesses in your area
+                {isLoading ? "Loading featured listings..." : "Top-rated businesses in your area"}
               </p>
             </div>
             <Link to="/directory">

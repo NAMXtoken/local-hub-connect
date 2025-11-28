@@ -10,16 +10,18 @@ interface BusinessCardProps {
   slug: string;
   name: string;
   category: string;
-  image: string;
-  rating: number;
-  reviews: number;
+  image?: string;
+  rating?: number | null;
+  reviews?: number | null;
   location: string;
   distance?: string;
-  priceRange: number;
+  priceRange?: number | null;
   phone?: string;
   isOpen?: boolean;
-  bumps: number;
+  bumps?: number;
 }
+
+const PLACEHOLDER_IMAGE = "https://placehold.co/600x400?text=Samui+Connect";
 
 export const BusinessCard = ({
   id,
@@ -34,7 +36,7 @@ export const BusinessCard = ({
   priceRange,
   phone,
   isOpen = true,
-  bumps,
+  bumps = 0,
 }: BusinessCardProps) => {
   const [bumpCount, setBumpCount] = useState(bumps);
   const [hasBumped, setHasBumped] = useState(false);
@@ -52,7 +54,7 @@ export const BusinessCard = ({
       <Card className="overflow-hidden hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 group">
         <div className="relative h-48 overflow-hidden">
           <img
-            src={image}
+            src={image || PLACEHOLDER_IMAGE}
             alt={name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
           />
@@ -74,10 +76,12 @@ export const BusinessCard = ({
               </h3>
               <p className="text-sm text-muted-foreground">{category}</p>
             </div>
-            <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-lg">
-              <Star className="h-4 w-4 fill-primary text-primary" />
-              <span className="text-sm font-semibold text-primary">{rating}</span>
-            </div>
+            {typeof rating === "number" ? (
+              <div className="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-lg">
+                <Star className="h-4 w-4 fill-primary text-primary" />
+                <span className="text-sm font-semibold text-primary">{rating.toFixed(1)}</span>
+              </div>
+            ) : null}
           </div>
 
           <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
@@ -90,21 +94,27 @@ export const BusinessCard = ({
             )}
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
-              {[...Array(4)].map((_, i) => (
-                <span
-                  key={i}
-                  className={`text-sm font-semibold ${
-                    i < priceRange ? "text-primary" : "text-muted"
-                  }`}
-                >
-                  ฿
-                </span>
-              ))}
+          {(typeof priceRange === "number" || typeof reviews === "number") && (
+            <div className="flex items-center justify-between">
+              {typeof priceRange === "number" ? (
+                <div className="flex items-center gap-1">
+                  {[...Array(4)].map((_, i) => (
+                    <span
+                      key={i}
+                      className={`text-sm font-semibold ${
+                        i < (priceRange ?? 0) ? "text-primary" : "text-muted"
+                      }`}
+                    >
+                      ฿
+                    </span>
+                  ))}
+                </div>
+              ) : <span />}
+              {typeof reviews === "number" ? (
+                <span className="text-xs text-muted-foreground">{reviews} reviews</span>
+              ) : null}
             </div>
-            <span className="text-xs text-muted-foreground">{reviews} reviews</span>
-          </div>
+          )}
 
           <div className="flex items-center justify-between mt-3 pt-3 border-t">
             <span className="text-sm text-muted-foreground">{bumpCount} bumps</span>
