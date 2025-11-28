@@ -1,9 +1,10 @@
 import { Header } from "@/components/Header";
 import { FilterSidebar } from "@/components/FilterSidebar";
 import { BusinessCard } from "@/components/BusinessCard";
+import { slugify } from "@/lib/utils";
 
 // Mock data for demonstration
-const businesses = [
+const businessData = [
   {
     id: "1",
     name: "The Modern Cafe",
@@ -109,7 +110,11 @@ const businesses = [
     isOpen: true,
     bumps: 678,
   },
-].sort((a, b) => b.bumps - a.bumps);
+];
+
+const businesses = businessData
+  .map((business) => ({ ...business, slug: slugify(business.name) }))
+  .sort((a, b) => b.bumps - a.bumps);
 
 const Directory = () => {
   return (

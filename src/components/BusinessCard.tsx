@@ -1,4 +1,4 @@
-import { MapPin, Star, Phone, DollarSign, Heart } from "lucide-react";
+import { MapPin, Star, Phone, Heart } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { useState } from "react";
 
 interface BusinessCardProps {
   id: string;
+  slug: string;
   name: string;
   category: string;
   image: string;
@@ -22,6 +23,7 @@ interface BusinessCardProps {
 
 export const BusinessCard = ({
   id,
+  slug,
   name,
   category,
   image,
@@ -46,7 +48,7 @@ export const BusinessCard = ({
   };
 
   return (
-    <Link to={`/business/${id}`} className="block">
+    <Link to={`/business/${slug}`} className="block">
       <Card className="overflow-hidden hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 group">
         <div className="relative h-48 overflow-hidden">
           <img
@@ -91,12 +93,14 @@ export const BusinessCard = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
               {[...Array(4)].map((_, i) => (
-                <DollarSign
+                <span
                   key={i}
-                  className={`h-4 w-4 ${
+                  className={`text-sm font-semibold ${
                     i < priceRange ? "text-primary" : "text-muted"
                   }`}
-                />
+                >
+                  ฿
+                </span>
               ))}
             </div>
             <span className="text-xs text-muted-foreground">{reviews} reviews</span>

@@ -5,8 +5,12 @@ import { Leaderboard } from "@/components/Leaderboard";
 import { BusinessCard } from "@/components/BusinessCard";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { slugify } from "@/lib/utils";
 
-const leaderboardData = {
+const withSlugs = <T extends { name: string }>(items: T[]) =>
+  items.map((item) => ({ ...item, slug: slugify(item.name) }));
+
+const leaderboardDataRaw = {
   "Restaurants": [
     { id: "1", name: "Gourmet Bistro", bumps: 892, category: "Restaurants", image: "", rating: 4.7 },
     { id: "2", name: "Ocean View Restaurant", bumps: 756, category: "Restaurants", image: "", rating: 4.6 },
@@ -49,7 +53,14 @@ const leaderboardData = {
   ],
 };
 
-const featuredBusinesses = [
+const leaderboardData = Object.fromEntries(
+  Object.entries(leaderboardDataRaw).map(([category, businesses]) => [
+    category,
+    withSlugs(businesses),
+  ])
+);
+
+const featuredBusinesses = withSlugs([
   {
     id: "1",
     name: "The Modern Cafe",
@@ -89,7 +100,7 @@ const featuredBusinesses = [
     isOpen: false,
     bumps: 289,
   },
-];
+]);
 
 const Index = () => {
   return (

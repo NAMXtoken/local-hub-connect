@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 
 interface Business {
   id: string;
+  slug: string;
   name: string;
   bumps: number;
   category: string;
@@ -57,7 +58,7 @@ export const Leaderboard = ({ businessesByCategory }: LeaderboardProps) => {
                 {businesses.slice(0, 3).map((business, index) => (
                   <Link
                     key={business.id}
-                    to={`/business/${business.id}`}
+                    to={`/business/${business.slug}`}
                     className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary/50 transition-colors group"
                   >
                     <div className={`${getMedalColor(index)} w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0`}>

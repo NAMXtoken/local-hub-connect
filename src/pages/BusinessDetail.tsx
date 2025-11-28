@@ -2,16 +2,28 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, Clock, Star, DollarSign, Globe, Mail, Share2, Heart, Instagram, Facebook } from "lucide-react";
+import { MapPin, Phone, Clock, Star, Globe, Mail, Share2, Heart, Instagram, Facebook } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { useState } from "react";
 
 const BusinessDetail = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
+
+  const getBusinessName = (value?: string | undefined) => {
+    if (!value) return null;
+    const decoded = decodeURIComponent(value);
+    return decoded
+      .split("-")
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  };
+
+  const businessName = getBusinessName(slug) ?? "The Modern Cafe";
 
   // Mock data - would come from API in production
   const business = {
-    name: "The Modern Cafe",
+    name: businessName,
     category: "Cafes & Bars",
     images: [
       "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&q=80",
@@ -124,12 +136,14 @@ const BusinessDetail = () => {
                 </div>
                 <div className="flex items-center gap-1">
                   {[...Array(4)].map((_, i) => (
-                    <DollarSign
+                    <span
                       key={i}
-                      className={`h-5 w-5 ${
+                      className={`text-lg font-semibold ${
                         i < business.priceRange ? "text-primary" : "text-muted"
                       }`}
-                    />
+                    >
+                      ฿
+                    </span>
                   ))}
                 </div>
                 {business.isOpen ? (
