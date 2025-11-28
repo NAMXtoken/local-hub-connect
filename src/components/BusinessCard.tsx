@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { useAnonUserId } from "@/hooks/use-anon-user-id";
+import { useBumpMutation } from "@/hooks/use-bumps";
 
 interface BusinessCardProps {
   id: string;
@@ -40,13 +42,33 @@ export const BusinessCard = ({
 }: BusinessCardProps) => {
   const [bumpCount, setBumpCount] = useState(bumps);
   const [hasBumped, setHasBumped] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const userId = useAnonUserId();
+  const bumpMutation = useBumpMutation();
 
   const handleBump = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!hasBumped) {
-      setBumpCount(prev => prev + 1);
-      setHasBumped(true);
+    if (!userId || bumpMutation.isPending || hasBumped) {
+      return;
     }
+    setErrorMessage(null);
+    bumpMutation.mutate(
+      { slug, listingId: id, userId, category, name },
+      {
+        onSuccess: () => {
+          setHasBumped(true);
+          setBumpCount((prev) => prev + 1);
+        },
+        onError: (error: any) => {
+          const message = error?.details?.error || error?.message || "Unable to bump right now";
+          if (message.toLowerCase().includes("bumped")) {
+            setErrorMessage("Easy tiger! You already sent love today.");
+          } else {
+            setErrorMessage(message);
+          }
+        },
+      }
+    );
   };
 
   return (
@@ -122,13 +144,16 @@ export const BusinessCard = ({
               variant={hasBumped ? "secondary" : "default"}
               size="sm"
               onClick={handleBump}
-              disabled={hasBumped}
+              disabled={hasBumped || !userId || bumpMutation.isPending}
               className="gap-1"
             >
               <Heart className={`h-4 w-4 ${hasBumped ? "fill-current" : ""}`} />
               {hasBumped ? "Bumped!" : "Bump"}
             </Button>
           </div>
+          {errorMessage && (
+            <p className="text-xs text-destructive mt-1">{errorMessage}</p>
+          )}
         </div>
       </Card>
     </Link>

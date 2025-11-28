@@ -4,19 +4,56 @@ import { DirectoryMap } from "@/components/DirectoryMap";
 import { DirectoryListItem } from "@/components/DirectoryListItem";
 import { BusinessCard } from "@/components/BusinessCard";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ChevronDown } from "lucide-react";
 import { useListings } from "@/hooks/use-listings";
 import { useLayoutPreference } from "@/contexts/layout-preference";
 import { useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+
+const defaultFilterState: FilterState = {
+  categories: [],
+  locations: [],
+  search: "",
+  distance: 10,
+  priceRange: [1, 4],
+  rating: 3,
+};
+
+const parseFiltersFromParams = (params: URLSearchParams) => {
+  const extractValues = (key: string) =>
+    params
+      .getAll(key)
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+  return {
+    categories: extractValues("category"),
+    locations: extractValues("location"),
+    search: params.get("search")?.trim() ?? "",
+  } as Pick<FilterState, "categories" | "locations" | "search">;
+};
+
+const normalizeValues = (values: string[], options: string[]) => {
+  if (!values.length || !options.length) return values;
+  return values.map((value) => {
+    const match = options.find((option) => option.toLowerCase() === value.toLowerCase());
+    return match ?? value;
+  });
+};
+
+const arraysEqual = (a: string[], b: string[]) => {
+  if (a.length !== b.length) return false;
+  return a.every((value, index) => value === b[index]);
+};
 
 const Directory = () => {
+  const [searchParams] = useSearchParams();
   const { viewMode } = useLayoutPreference();
+  const initialFiltersFromQuery = parseFiltersFromParams(searchParams);
   const [filters, setFilters] = useState<FilterState>({
-    categories: [],
-    locations: [],
-    search: "",
-    distance: 10,
-    priceRange: [1, 4],
-    rating: 3,
+    ...defaultFilterState,
+    ...initialFiltersFromQuery,
   });
 
   const noFiltersActive =
@@ -25,7 +62,9 @@ const Directory = () => {
     !filters.search.trim();
 
   const [visibleListingIds, setVisibleListingIds] = useState<string[]>([]);
-  const [filtersCollapsed, setFiltersCollapsed] = useState(false);
+  const applyExplorerFilters = (updates: Pick<FilterState, "categories" | "locations" | "search">) => {
+    setFilters((prev) => ({ ...prev, ...updates }));
+  };
 
   const baseQuery = useListings();
   const filteredQuery = useListings(
@@ -69,6 +108,39 @@ const Directory = () => {
     });
     return Array.from(set).sort();
   }, [baseQuery.data, listingData]);
+
+  useEffect(() => {
+    const derived = parseFiltersFromParams(searchParams);
+    setFilters((prev) => {
+      if (
+        arraysEqual(prev.categories, derived.categories) &&
+        arraysEqual(prev.locations, derived.locations) &&
+        prev.search === derived.search
+      ) {
+        return prev;
+      }
+      return { ...prev, ...derived };
+    });
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!availableCategories.length && !availableLocations.length) return;
+    setFilters((prev) => {
+      const normalizedCategories = normalizeValues(prev.categories, availableCategories);
+      const normalizedLocations = normalizeValues(prev.locations, availableLocations);
+      if (
+        arraysEqual(prev.categories, normalizedCategories) &&
+        arraysEqual(prev.locations, normalizedLocations)
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        categories: normalizedCategories,
+        locations: normalizedLocations,
+      };
+    });
+  }, [availableCategories, availableLocations]);
 
   useEffect(() => {
     setVisibleListingIds(listingData.map((listing) => listing.id));
@@ -134,8 +206,11 @@ const Directory = () => {
             </p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {businessCards.map((business) => (
-                <BusinessCard key={business.id} {...business} />
+              {businessCards.map((business, index) => (
+                <BusinessCard
+                  key={`${business.slug ?? business.id}-${business.id ?? "na"}-${index}`}
+                  {...business}
+                />
               ))}
             </div>
           )}
@@ -147,53 +222,6 @@ const Directory = () => {
   const explorerLayout = (
     <div className="flex flex-1 flex-col lg:flex-row lg:h-[calc(100vh-64px)]">
       <aside className="w-full lg:w-[420px] xl:w-[480px] border-b lg:border-r bg-background flex flex-col lg:h-full lg:overflow-hidden">
-        <div className="border-b px-6 py-5 flex flex-col gap-3">
-          <p className="text-sm text-muted-foreground">Directory</p>
-          <h1 className="text-2xl font-bold text-foreground">Samui Connect</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {isLoading && "Loading businesses..."}
-            {isError && "Unable to load businesses."}
-            {!isLoading && !isError && `${explorerCount} businesses match your filters`}
-          </p>
-          <div className="hidden md:flex justify-end">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setFiltersCollapsed((prev) => !prev)}
-            >
-              {filtersCollapsed ? "Show Filters" : "Hide Filters"}
-            </Button>
-          </div>
-        </div>
-
-        <div className="border-b px-4 py-4 md:hidden">
-          <details className="group">
-            <summary className="flex items-center justify-between text-sm font-semibold text-foreground cursor-pointer">
-              Filters
-              <span className="text-xs text-muted-foreground">Tap to toggle</span>
-            </summary>
-            <div className="mt-4">
-              <FilterSidebar
-                filters={filters}
-                categories={availableCategories}
-                locations={availableLocations}
-                onChange={setFilters}
-              />
-            </div>
-          </details>
-        </div>
-
-        {!filtersCollapsed && (
-          <div className="hidden md:block border-b px-4 py-4 max-h-[45vh] overflow-y-auto">
-            <FilterSidebar
-              filters={filters}
-              categories={availableCategories}
-              locations={availableLocations}
-              onChange={setFilters}
-            />
-          </div>
-        )}
-
         <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/30 lg:h-full">
           {isLoading ? (
             <p className="text-muted-foreground">Fetching listings...</p>
@@ -205,7 +233,11 @@ const Directory = () => {
             </p>
           ) : (
             explorerListings.map((listing, index) => (
-              <DirectoryListItem key={`${listing.id}-${index}`} listing={listing} rank={index + 1} />
+              <DirectoryListItem
+                key={`${listing.slug ?? listing.id}-${listing.id}-${index}`}
+                listing={listing}
+                rank={index + 1}
+              />
             ))
           )}
         </div>
@@ -219,7 +251,17 @@ const Directory = () => {
             onVisibleListingsChange={setVisibleListingIds}
           />
         </div>
-        <div className="pointer-events-none absolute top-6 left-6 hidden lg:flex flex-col gap-2">
+        <div className="pointer-events-none absolute top-4 left-4 right-4 flex flex-col gap-3">
+          <div className="pointer-events-auto bg-background/95 backdrop-blur rounded-2xl shadow-lg border px-4 py-3">
+            <ExplorerFilterBar
+              filters={filters}
+              categories={availableCategories}
+              locations={availableLocations}
+              onApply={applyExplorerFilters}
+            />
+          </div>
+        </div>
+        <div className="pointer-events-none hidden lg:block absolute bottom-6 right-6">
           <div className="pointer-events-auto bg-background/90 backdrop-blur rounded-2xl shadow-lg px-5 py-4">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Viewing</p>
             <p className="text-lg font-semibold text-foreground">{explorerCount} listings on map</p>
@@ -242,3 +284,114 @@ const Directory = () => {
 };
 
 export default Directory;
+
+interface ExplorerFilterBarProps {
+  filters: FilterState;
+  categories: string[];
+  locations: string[];
+  onApply: (updates: Pick<FilterState, "categories" | "locations" | "search">) => void;
+}
+
+interface SelectFieldProps {
+  label: string;
+  value: string;
+  options: string[];
+  emptyLabel: string;
+  disabled?: boolean;
+  onChange: (next: string) => void;
+}
+
+const ExplorerFilterBar = ({ filters, categories, locations, onApply }: ExplorerFilterBarProps) => {
+  const [searchValue, setSearchValue] = useState(filters.search);
+  const [categoryValue, setCategoryValue] = useState(filters.categories[0] ?? "");
+  const [locationValue, setLocationValue] = useState(filters.locations[0] ?? "");
+
+  useEffect(() => {
+    setSearchValue(filters.search);
+  }, [filters.search]);
+
+  useEffect(() => {
+    setCategoryValue(filters.categories[0] ?? "");
+  }, [filters.categories]);
+
+  useEffect(() => {
+    setLocationValue(filters.locations[0] ?? "");
+  }, [filters.locations]);
+
+  const handleSubmit = (event?: React.FormEvent) => {
+    event?.preventDefault();
+    onApply({
+      search: searchValue.trim(),
+      categories: categoryValue ? [categoryValue] : [],
+      locations: locationValue ? [locationValue] : [],
+    });
+  };
+
+  const selectedCategory = categories.includes(categoryValue) ? categoryValue : "";
+  const selectedLocation = locations.includes(locationValue) ? locationValue : "";
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-2 lg:flex-row lg:items-end">
+      <div className="flex flex-col w-full gap-1">
+        <label className="text-xs font-semibold text-muted-foreground" htmlFor="explorer-search">
+          Search
+        </label>
+        <Input
+          id="explorer-search"
+          value={searchValue}
+          onChange={(event) => setSearchValue(event.target.value)}
+          placeholder="Search by name, tag, or description"
+          className="h-9 px-2.5"
+        />
+      </div>
+
+      <SelectField
+        label="Category"
+        value={selectedCategory}
+        options={categories}
+        emptyLabel="All Categories"
+        onChange={setCategoryValue}
+        disabled={categories.length === 0}
+      />
+
+      <SelectField
+        label="Location"
+        value={selectedLocation}
+        options={locations}
+        emptyLabel="All Locations"
+        onChange={setLocationValue}
+        disabled={locations.length === 0}
+      />
+
+      <div className="flex w-full lg:w-auto">
+        <Button type="submit" className="w-full h-9 lg:h-9 px-3">
+          Search
+        </Button>
+      </div>
+    </form>
+  );
+};
+
+const SelectField = ({ label, value, options, emptyLabel, disabled, onChange }: SelectFieldProps) => {
+  return (
+    <div className="flex flex-col w-full lg:max-w-xs gap-1">
+      <span className="text-xs font-semibold text-muted-foreground">{label}</span>
+      <div className="relative">
+        <select
+          className="appearance-none h-9 w-full rounded-md border border-input bg-background pl-2.5 pr-9 text-sm"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          disabled={disabled}
+        >
+          <option value="">{emptyLabel}</option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      </div>
+    </div>
+  );
+};

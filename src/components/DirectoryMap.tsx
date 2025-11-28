@@ -84,7 +84,7 @@ export const DirectoryMap = ({ listings, className, onVisibleListingsChange }: D
       zoom: DEFAULT_ZOOM,
     });
 
-    map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), "top-right");
+    map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), "bottom-right");
     mapRef.current = map;
 
     return () => {

@@ -23,7 +23,7 @@ export interface ListingRecord {
 
 let cache: ListingRecord[] | null = null;
 
-async function loadListings(): Promise<ListingRecord[]> {
+export async function loadListings(): Promise<ListingRecord[]> {
   if (cache) {
     return cache;
   }

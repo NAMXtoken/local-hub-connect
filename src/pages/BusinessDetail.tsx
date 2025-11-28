@@ -4,22 +4,19 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Phone, Globe, Mail, Share2, Heart, Instagram, Facebook, Map } from "lucide-react";
 import { useParams } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useListing } from "@/hooks/use-listings";
 import { BusinessMap } from "@/components/BusinessMap";
+import { useAnonUserId } from "@/hooks/use-anon-user-id";
+import { useBumpMutation, useBumpStats } from "@/hooks/use-bumps";
 
 const BusinessDetail = () => {
   const { slug } = useParams();
   const { data: listing, isLoading, isError } = useListing(slug);
-  const [bumpCount, setBumpCount] = useState(0);
-  const [hasBumped, setHasBumped] = useState(false);
-
-  useEffect(() => {
-    if (listing) {
-      setBumpCount(Math.max(0, listing.contacts?.facebook?.length ?? 0) * 10);
-      setHasBumped(false);
-    }
-  }, [listing]);
+  const userId = useAnonUserId();
+  const { data: bumpStats, isLoading: bumpLoading } = useBumpStats(listing?.slug, userId ?? undefined);
+  const bumpMutation = useBumpMutation();
+  const [bumpError, setBumpError] = useState<string | null>(null);
 
   const heroImages = useMemo(() => {
     const preferred = listing?.imageUrl || listing?.remoteImageUrl;
@@ -63,11 +60,43 @@ const BusinessDetail = () => {
     : listing?.mapEmbedUrl || listing?.url;
 
   const handleBump = () => {
-    if (!hasBumped) {
-      setBumpCount((prev) => prev + 1);
-      setHasBumped(true);
-    }
+    if (!listing || !userId || bumpMutation.isPending) return;
+    setBumpError(null);
+    bumpMutation.mutate(
+      {
+        slug: listing.slug,
+        listingId: listing.id,
+        userId,
+        category: listing.primaryCategory || listing.tags[0],
+        name: listing.name,
+      },
+      {
+        onSuccess: () => setBumpError(null),
+        onError: (error: any) => {
+          const message = error?.details?.error || error?.message || "Unable to bump right now";
+          if (message.toLowerCase().includes("bumped")) {
+            setBumpError("Easy there! You already high-fived this place today. Try again tomorrow.");
+          } else {
+            setBumpError(message);
+          }
+        },
+      }
+    );
   };
+
+  const totalBumps = bumpStats?.total ?? 0;
+  const lastDayBumps = bumpStats?.counts?.["24 hours"] ?? 0;
+  const rawCanBump = bumpStats?.canBump ?? true;
+  const nextAvailableAt = bumpStats?.nextAvailableAt ?? null;
+  const isCoolingDown = Boolean(userId && nextAvailableAt && rawCanBump === false);
+
+  const nextAvailableMessage = useMemo(() => {
+    if (!nextAvailableAt) return null;
+    const diff = nextAvailableAt - Date.now();
+    if (diff <= 0) return "You can bump this listing now.";
+    const hours = Math.ceil(diff / (1000 * 60 * 60));
+    return `You can bump again in about ${hours} hour${hours === 1 ? "" : "s"}.`;
+  }, [nextAvailableAt]);
 
   if (isLoading) {
     return (
@@ -174,21 +203,36 @@ const BusinessDetail = () => {
 
             <Card className="p-6">
               <h2 className="text-xl font-semibold text-foreground mb-4">Community Love</h2>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-3xl font-bold text-primary">{bumpCount}</p>
-                  <p className="text-sm text-muted-foreground">Total Bumps</p>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-8">
+                  <div>
+                    <p className="text-3xl font-bold text-primary">{totalBumps}</p>
+                    <p className="text-sm text-muted-foreground">All-time bumps</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-semibold text-foreground">{lastDayBumps}</p>
+                    <p className="text-sm text-muted-foreground">Past 24 hours</p>
+                  </div>
                 </div>
                 <Button
                   size="lg"
                   onClick={handleBump}
-                  disabled={hasBumped}
-                  variant={hasBumped ? "secondary" : "default"}
+                  disabled={!listing || bumpLoading || bumpMutation.isPending || !userId || isCoolingDown}
+                  variant={!userId || isCoolingDown ? "secondary" : "default"}
                   className="gap-2"
                 >
-                  <Heart className={`h-5 w-5 ${hasBumped ? "fill-current" : ""}`} />
-                  {hasBumped ? "Bumped!" : "Bump This Business"}
+                  <Heart className={`h-5 w-5 ${isCoolingDown ? "fill-current" : ""}`} />
+                  {!userId
+                    ? "Preparing..."
+                    : isCoolingDown
+                      ? "Come back soon"
+                      : "Bump This Business"}
                 </Button>
+                {bumpLoading && <p className="text-sm text-muted-foreground">Checking bump status...</p>}
+                {isCoolingDown && nextAvailableMessage && (
+                  <p className="text-sm text-muted-foreground">{nextAvailableMessage}</p>
+                )}
+                {bumpError && <p className="text-sm text-destructive">{bumpError}</p>}
               </div>
               <p className="text-sm text-muted-foreground">
                 Show your appreciation for great service and help this business gain visibility in the directory!

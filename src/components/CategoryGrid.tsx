@@ -1,16 +1,16 @@
-import { Store, Utensils, ShoppingBag, Briefcase, Heart, Coffee, Wrench, Car } from "lucide-react";
+import { Utensils, BedDouble, ShoppingBag, Sparkles, Briefcase, Map, Wine, Home } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 
 const categories = [
-  { name: "Restaurants", icon: Utensils, count: 234, color: "bg-red-500" },
-  { name: "Shopping", icon: ShoppingBag, count: 189, color: "bg-pink-500" },
-  { name: "Services", icon: Briefcase, count: 321, color: "bg-blue-500" },
-  { name: "Health & Medical", icon: Heart, count: 156, color: "bg-green-500" },
-  { name: "Cafes & Bars", icon: Coffee, count: 178, color: "bg-amber-500" },
-  { name: "Retail", icon: Store, count: 245, color: "bg-purple-500" },
-  { name: "Home Services", icon: Wrench, count: 198, color: "bg-orange-500" },
-  { name: "Automotive", icon: Car, count: 134, color: "bg-cyan-500" },
+  { name: "Food & Beverage", icon: Utensils, count: 548, color: "bg-red-500" },
+  { name: "Accommodation", icon: BedDouble, count: 300, color: "bg-indigo-500" },
+  { name: "Shopping", icon: ShoppingBag, count: 95, color: "bg-pink-500" },
+  { name: "Beauty & Wellness", icon: Sparkles, count: 106, color: "bg-emerald-500" },
+  { name: "Professional Services", icon: Briefcase, count: 116, color: "bg-blue-500" },
+  { name: "Things To Do", icon: Map, count: 97, color: "bg-amber-500" },
+  { name: "Bars & Nightlife", icon: Wine, count: 57, color: "bg-purple-500" },
+  { name: "Property Services", icon: Home, count: 67, color: "bg-orange-500" },
 ];
 
 export const CategoryGrid = () => {
@@ -29,8 +29,9 @@ export const CategoryGrid = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {categories.map((category) => {
             const Icon = category.icon;
+            const categoryQuery = new URLSearchParams({ category: category.name }).toString();
             return (
-              <Link key={category.name} to={`/directory?category=${category.name.toLowerCase()}`}>
+              <Link key={category.name} to={`/directory?${categoryQuery}`}>
                 <Card className="p-6 hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
                   <div className="flex flex-col items-center text-center gap-3">
                     <div className={`${category.color} p-4 rounded-xl group-hover:scale-110 transition-transform`}>

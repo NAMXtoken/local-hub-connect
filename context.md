@@ -15,3 +15,28 @@
 28/11 16:31 Added Mapbox-powered DirectoryMap component with filtered pins and env-driven token.
 28/11 18:29 Rebuilt directory UI into TripAdvisor-style layout with sidebar list + full-height map.
 28/11 18:39 Added layout preference context + header toggle to swap between classic and explorer directory UIs.
+28/11 20:30 Applied home category query params so Directory loads with matching filters.
+28/11 20:48 Replaced home category grid with 8 tag-backed catch-all filters (Food & Beverage, Accommodation, etc.).
+28/11 20:59 Updated directory business cards to use slug-based keys to avoid React warnings.
+28/11 21:05 Ensured Directory list/grid keys combine slug + id to avoid duplicate React warnings.
+28/11 21:08 Made Directory card keys index-aware to avoid duplicate slug/id combos triggering warnings.
+28/11 22:27 Rebuilt explorer filters into search row + category/location dropdown row with Search action.
+28/11 22:29 Guarded explorer dropdown values until options load so category deep-links don’t crash.
+28/11 22:31 Replaced Radix selects with native dropdowns to resolve invalid hook call errors.
+28/11 22:32 Removed explorer sidebar header and show/hide toggle so filter form is now the top section.
+28/11 22:37 Moved explorer filter form into a floating map overlay and removed sidebar version.
+28/11 22:39 Restyled floating map filters into a single-row full-width layout.
+28/11 22:40 Repositioned explorer "Viewing" counter card to bottom-right of the map overlay.
+28/11 22:42 Moved Mapbox navigation controls to bottom-right as requested.
+28/11 22:44 Tightened padding on floating explorer filters (inputs, dropdowns, button) for slimmer row.
+28/11 22:45 Slimmed floating filter controls further (shorter height, tighter horizontal padding).
+28/11 22:48 Added extra right padding on explorer dropdowns so arrow icons have breathing room.
+28/11 22:49 Wrapped explorer dropdowns with custom icons + appearance-none selects for proper right padding.
+28/11 23:05 Added persistent bump API, daily limits, anon IDs, and live leaderboard tied to new metrics.
+28/11 23:09 Restored per-category leaderboard UI while feeding it with live bump metrics.
+28/11 23:11 Improved bump hook/button logic so stats load without userID and button only disables during cooldown.
+28/11 23:13 Made anon IDs immediate and stop disabling bump button unless cooldown info exists.
+28/11 23:14 Added JSON-safe bump mutation handling and request parsing to fix API errors.
+28/11 23:16 Added localStorage fallback for bumps API so dev mode works when /api/bumps is unavailable.
+28/11 23:19 Synced local bump stats/leaderboard updates and added playful cooldown messaging.
+28/11 23:28 Reverted hero/leaderboard layout so sections match original ordering.
