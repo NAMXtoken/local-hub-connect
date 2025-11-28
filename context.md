@@ -9,3 +9,5 @@
 28/11 14:55 Hooked Directory filters/search to live listings data via FilterSidebar updates.
 28/11 15:04 Restored original filter UI layout and added JSON fallback for local data fetches.
 28/11 15:22 Added image download/build scripts and local image preference for listings.
+28/11 16:04 Implemented API/query-driven filtering with server- and client-side fallbacks for listings.
+28/11 16:13 JSON build now rewrites listing images to local /listing-images paths after downloads.

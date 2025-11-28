@@ -66,7 +66,14 @@ def main() -> int:
             tags = split_list(row.get("tags"), ",")
             description = (row.get("description") or "").strip()
             remote_image = (row.get("image_url") or "").strip()
-            local_image = manifest.get(listing_id)
+            raw_local_image = manifest.get(listing_id, "")
+            local_image = (
+                raw_local_image
+                if not raw_local_image
+                else raw_local_image
+                if raw_local_image.startswith("/")
+                else f"/{raw_local_image}"
+            )
 
             entry = {
                 "id": listing_id,

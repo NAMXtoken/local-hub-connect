@@ -7,8 +7,6 @@ import { useMemo, useState } from "react";
 const PLACEHOLDER_LOCATION = "Koh Samui";
 
 const Directory = () => {
-  const { data: listings = [], isLoading, isError } = useListings();
-  const listingData = listings ?? [];
   const [filters, setFilters] = useState<FilterState>({
     categories: [],
     locations: [],
@@ -18,81 +16,70 @@ const Directory = () => {
     rating: 3,
   });
 
+  const noFiltersActive =
+    filters.categories.length === 0 &&
+    filters.locations.length === 0 &&
+    !filters.search.trim();
+
+  const baseQuery = useListings();
+  const filteredQuery = useListings(
+    {
+      categories: filters.categories,
+      locations: filters.locations,
+      search: filters.search,
+    },
+    { enabled: !noFiltersActive }
+  );
+
+  const listingData = (noFiltersActive ? baseQuery.data : filteredQuery.data) ?? [];
+  const isLoading = noFiltersActive ? baseQuery.isLoading : filteredQuery.isLoading;
+  const isError = noFiltersActive ? baseQuery.isError : filteredQuery.isError;
+  const totalCount = listingData.length;
+
   const availableCategories = useMemo(() => {
+    const source = baseQuery.data ?? listingData;
     const set = new Set<string>();
-    listingData.forEach((listing) => {
+    source.forEach((listing) => {
       const category = listing.primaryCategory || listing.tags[0];
       if (category) {
         set.add(category);
       }
     });
     return Array.from(set).sort();
-  }, [listingData]);
+  }, [baseQuery.data, listingData]);
 
   const availableLocations = useMemo(() => {
+    const source = baseQuery.data ?? listingData;
     const set = new Set<string>();
-    listingData.forEach((listing) => {
+    source.forEach((listing) => {
       const location = listing.location;
       if (location) {
         set.add(location);
       }
     });
     return Array.from(set).sort();
-  }, [listingData]);
+  }, [baseQuery.data, listingData]);
 
-  const normalizedSearch = filters.search.trim().toLowerCase();
-
-  const businesses = useMemo(() => {
-    return listingData
-      .filter((listing) => {
-        if (
-          filters.categories.length > 0 &&
-          !filters.categories.includes(
-            listing.primaryCategory || listing.tags[0] || ""
-          )
-        ) {
-          return false;
-        }
-
-        if (
-          filters.locations.length > 0 &&
-          !filters.locations.includes(listing.location || "")
-        ) {
-          return false;
-        }
-
-        if (normalizedSearch) {
-          const haystack = [
-            listing.name,
-            listing.description,
-            listing.location,
-            listing.tags.join(" "),
-          ]
-            .join(" ")
-            .toLowerCase();
-          if (!haystack.includes(normalizedSearch)) {
-            return false;
-          }
-        }
-
-        return true;
-      })
-      .map((listing) => ({
-        id: listing.id,
-        slug: listing.slug,
-        name: listing.name || "Untitled Listing",
-        category: listing.primaryCategory || listing.tags[0] || "Local Business",
-        image: listing.imageUrl || listing.remoteImageUrl,
-        rating: null,
-        reviews: null,
-        location: listing.location || listing.address || PLACEHOLDER_LOCATION,
-        priceRange: null,
-        phone: listing.contacts?.phone?.[0],
-        isOpen: true,
-        bumps: 0,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [listingData, filters.categories, filters.locations, normalizedSearch]);
+  const businesses = useMemo(
+    () =>
+      listingData
+        .map((listing) => ({
+          id: listing.id,
+          slug: listing.slug,
+          name: listing.name || "Untitled Listing",
+          category: listing.primaryCategory || listing.tags[0] || "Local Business",
+          image: listing.imageUrl || listing.remoteImageUrl,
+          rating: null,
+          reviews: null,
+          location: listing.location || listing.address || PLACEHOLDER_LOCATION,
+          priceRange: null,
+          phone: listing.contacts?.phone?.[0],
+          isOpen: true,
+          bumps: 0,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [listingData]
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -106,7 +93,7 @@ const Directory = () => {
           <p className="text-muted-foreground">
             {isLoading && "Loading businesses..."}
             {isError && "Unable to load businesses."}
-            {!isLoading && !isError && `Showing ${businesses.length} businesses`}
+            {!isLoading && !isError && `Showing ${totalCount} businesses`}
           </p>
         </div>
 
