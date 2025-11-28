@@ -31,7 +31,15 @@ function parseBody(body: unknown) {
   return null;
 }
 
-const DATA_PATH = path.join(process.cwd(), 'data', 'bumps.json');
+export const config = {
+  runtime: 'nodejs',
+};
+
+const DATA_PATH = process.env.BUMP_DATA_PATH
+  ? path.resolve(process.env.BUMP_DATA_PATH)
+  : process.env.VERCEL
+    ? path.join('/tmp', 'bumps.json')
+    : path.join(process.cwd(), 'data', 'bumps.json');
 const DAILY_LIMIT_MS = 24 * 60 * 60 * 1000;
 const BUMP_WINDOWS = [
   { label: '24 hours', ms: 24 * 60 * 60 * 1000 },
@@ -138,7 +146,13 @@ async function handlePost(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const records = await readBumps();
+  let records: BumpRecord[] = [];
+  try {
+    records = await readBumps();
+  } catch (error) {
+    console.error('Failed to read bump store', error);
+    records = [];
+  }
   const { canBump, nextAvailableAt } = getUserCooldown(records, slug, userId);
   if (!canBump) {
     res.status(429).json({ error: 'Already bumped within 24 hours', nextAvailableAt });
@@ -158,7 +172,12 @@ async function handlePost(req: VercelRequest, res: VercelResponse) {
 }
 
 async function handleGet(req: VercelRequest, res: VercelResponse) {
-  const records = await readBumps();
+  let records: BumpRecord[] = [];
+  try {
+    records = await readBumps();
+  } catch (error) {
+    console.error('Failed to read bump store', error);
+  }
   if (req.query.leaderboard) {
     await sendLeaderboard(records, req, res);
     return;
@@ -196,9 +215,13 @@ async function sendLeaderboard(records: BumpRecord[], req: VercelRequest, res: V
     leaderboard = aggregateCounts(records, 0);
   }
 
-  const listings = await loadListings();
-  const listingMap = new Map<string, ListingRecord>();
-  listings.forEach((listing) => listingMap.set(listing.slug, listing));
+  let listingMap = new Map<string, ListingRecord>();
+  try {
+    const listings = await loadListings();
+    listings.forEach((listing) => listingMap.set(listing.slug, listing));
+  } catch (error) {
+    console.error('Unable to load listings for leaderboard', error);
+  }
 
   const items = leaderboard.slice(0, limit).map((entry) => {
     const listing = listingMap.get(entry.slug);
@@ -206,7 +229,7 @@ async function sendLeaderboard(records: BumpRecord[], req: VercelRequest, res: V
       slug: entry.slug,
       listingId: entry.listingId,
       name: listing?.name ?? entry.slug,
-      category: listing?.primaryCategory || listing?.tags[0] || 'Local Business',
+      category: listing?.primaryCategory || listing?.tags?.[0] || 'Local Business',
       image: listing?.imageUrl || listing?.remoteImageUrl,
       count: entry.count,
     };

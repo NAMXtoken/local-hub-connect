@@ -83,6 +83,10 @@ function matchesSearch(listing: ListingRecord, search: string | undefined): bool
   return haystack.includes(query);
 }
 
+export const config = {
+  runtime: 'nodejs',
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const listings = await loadListings();

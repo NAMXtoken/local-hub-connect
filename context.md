@@ -40,3 +40,6 @@
 28/11 23:16 Added localStorage fallback for bumps API so dev mode works when /api/bumps is unavailable.
 28/11 23:19 Synced local bump stats/leaderboard updates and added playful cooldown messaging.
 28/11 23:28 Reverted hero/leaderboard layout so sections match original ordering.
+28/11 23:32 Pointed server bump storage to /tmp on Vercel (or env override) so API writes succeed.
+28/11 23:35 Forced bumps/listings API routes onto nodejs runtime so fs writes work on Vercel.
+28/11 23:37 Corrected Vercel runtime config to "nodejs" (supported value) for bumps/listings APIs.
