@@ -31,24 +31,48 @@ const BusinessDetail = () => {
     return [preferred, preferred, preferred];
   }, [listing?.imageUrl, listing?.remoteImageUrl]);
 
-  const contactGroups = useMemo(
+type ContactType = "phone" | "email" | "whatsapp" | "line";
+
+const contactGroups = useMemo(
     () => [
-      { label: "Phone", icon: Phone, values: listing?.contacts?.phone ?? [] },
-      { label: "Email", icon: Mail, values: listing?.contacts?.email ?? [] },
-      { label: "WhatsApp", icon: Phone, values: listing?.contacts?.whatsapp ?? [] },
-      { label: "Line", icon: Phone, values: listing?.contacts?.line ?? [] },
+      { label: "Phone", icon: Phone, values: listing?.contacts?.phone ?? [], type: "phone" as ContactType },
+      { label: "Email", icon: Mail, values: listing?.contacts?.email ?? [], type: "email" as ContactType },
+      { label: "WhatsApp", icon: Phone, values: listing?.contacts?.whatsapp ?? [], type: "whatsapp" as ContactType },
+      { label: "Line", icon: Phone, values: listing?.contacts?.line ?? [], type: "line" as ContactType },
     ],
     [listing?.contacts]
   );
 
-  const socialLinks = useMemo(
+const socialLinks = useMemo(
     () => [
       { icon: Globe, href: listing?.contacts?.website?.[0], label: "Website" },
       { icon: Facebook, href: listing?.contacts?.facebook?.[0], label: "Facebook" },
       { icon: Instagram, href: listing?.contacts?.instagram?.[0], label: "Instagram" },
     ].filter((entry) => Boolean(entry.href)),
     [listing?.contacts]
-  );
+);
+
+const buildContactHref = (type: ContactType, rawValue: string): string | null => {
+  if (!rawValue) return null;
+  switch (type) {
+    case "phone": {
+      const sanitized = rawValue.replace(/[^0-9+]/g, "");
+      return sanitized ? `tel:${sanitized}` : null;
+    }
+    case "email":
+      return `mailto:${rawValue}`;
+    case "whatsapp": {
+      const digits = rawValue.replace(/[^0-9]/g, "");
+      return digits ? `https://wa.me/${digits}` : null;
+    }
+    case "line": {
+      const handle = rawValue.startsWith("@") ? rawValue.slice(1) : rawValue;
+      return handle ? `https://line.me/R/ti/p/${encodeURIComponent(handle)}` : null;
+    }
+    default:
+      return null;
+  }
+};
 
   const hasCoordinates = useMemo(() => {
     const lat = Number(listing?.mapLatitude);
@@ -280,12 +304,38 @@ const BusinessDetail = () => {
                   group.values.length > 0 && (
                     <div key={group.label} className="flex items-start gap-3">
                       <group.icon className="h-5 w-5 text-primary mt-1" />
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium text-foreground">{group.label}</p>
-                        <div className="text-sm text-muted-foreground space-y-1">
-                          {group.values.map((value) => (
-                            <div key={value}>{value}</div>
-                          ))}
+                        <div className="flex flex-col gap-2">
+                          {group.values.map((value) => {
+                            const href = buildContactHref(group.type, value);
+                            if (!href) {
+                              return (
+                                <span key={value} className="text-sm text-muted-foreground">
+                                  {value}
+                                </span>
+                              );
+                            }
+                            const openInNewTab = href.startsWith("http");
+                            return (
+                              <Button
+                                key={`${group.type}-${value}`}
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                className="justify-start gap-2"
+                              >
+                                <a
+                                  href={href}
+                                  target={openInNewTab ? "_blank" : undefined}
+                                  rel={openInNewTab ? "noopener noreferrer" : undefined}
+                                >
+                                  <group.icon className="h-4 w-4" />
+                                  <span className="text-sm">{value}</span>
+                                </a>
+                              </Button>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>

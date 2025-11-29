@@ -56,3 +56,7 @@
 29/11 11:28 Reverted leaderboard hook to local API + fallback only so existing bump flows behave like before while keeping placeholders removed.
 29/11 11:34 Rebuilt homepage leaderboard to always show 8 key categories with bump-sorted results and alphabetical fallbacks per category.
 29/11 11:39 Category grid counts now reflect actual listing totals per featured category (with dynamic data fallback).
+29/11 12:58 Directory map now requests browser geolocation and drops a marker (with fallback message) to show the user’s current position.
+29/11 13:24 Swapped business contact info for clickable buttons (tel/mail/WhatsApp/Line links).
+29/11 13:42 Added Instagram Basic Display serverless API with token storage and setup docs.
+29/11 13:47 Added CLI helper to run the Instagram OAuth flow locally and store tokens.
