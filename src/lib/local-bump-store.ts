@@ -1,3 +1,5 @@
+import type { BumpMutationError, BumpMutationResponse } from "@/types/bumps";
+
 const STORAGE_KEY = "samui-connect-local-bumps";
 
 interface LocalBump {
@@ -86,11 +88,11 @@ export const localBumpLeaderboard = () => {
   return { timeframe: window.label, items };
 };
 
-export const localCreateBump = (payload: { slug: string; listingId: string; userId: string; category?: string; name?: string }) => {
+export const localCreateBump = (payload: { slug: string; listingId: string; userId: string; category?: string; name?: string }): BumpMutationResponse => {
   const records = read();
   const { canBump, nextAvailableAt } = cooldown(records, payload.slug, payload.userId);
   if (!canBump) {
-    const error = new Error("Already bumped") as Error & { details?: any };
+    const error: BumpMutationError = new Error("Already bumped");
     error.details = { nextAvailableAt };
     throw error;
   }
@@ -104,5 +106,5 @@ export const localCreateBump = (payload: { slug: string; listingId: string; user
   };
   records.push(entry);
   write(records);
-  return { success: true, nextAvailableAt: entry.timestamp + DAILY_MS, source: "local" as const };
+  return { success: true, nextAvailableAt: entry.timestamp + DAILY_MS, source: "local" };
 };

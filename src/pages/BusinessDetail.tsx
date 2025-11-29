@@ -9,6 +9,7 @@ import { useListing } from "@/hooks/use-listings";
 import { BusinessMap } from "@/components/BusinessMap";
 import { useAnonUserId } from "@/hooks/use-anon-user-id";
 import { useBumpMutation, useBumpStats } from "@/hooks/use-bumps";
+import type { BumpMutationError } from "@/types/bumps";
 
 const BusinessDetail = () => {
   const { slug } = useParams();
@@ -72,7 +73,7 @@ const BusinessDetail = () => {
       },
       {
         onSuccess: () => setBumpError(null),
-        onError: (error: any) => {
+        onError: (error: BumpMutationError) => {
           const message = error?.details?.error || error?.message || "Unable to bump right now";
           if (message.toLowerCase().includes("bumped")) {
             setBumpError("Easy there! You already high-fived this place today. Try again tomorrow.");

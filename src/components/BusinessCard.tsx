@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useAnonUserId } from "@/hooks/use-anon-user-id";
 import { useBumpMutation } from "@/hooks/use-bumps";
+import type { BumpMutationError } from "@/types/bumps";
 
 interface BusinessCardProps {
   id: string;
@@ -59,7 +60,7 @@ export const BusinessCard = ({
           setHasBumped(true);
           setBumpCount((prev) => prev + 1);
         },
-        onError: (error: any) => {
+        onError: (error: BumpMutationError) => {
           const message = error?.details?.error || error?.message || "Unable to bump right now";
           if (message.toLowerCase().includes("bumped")) {
             setErrorMessage("Easy tiger! You already sent love today.");

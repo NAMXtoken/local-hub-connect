@@ -43,3 +43,5 @@
 28/11 23:32 Pointed server bump storage to /tmp on Vercel (or env override) so API writes succeed.
 28/11 23:35 Forced bumps/listings API routes onto nodejs runtime so fs writes work on Vercel.
 28/11 23:37 Corrected Vercel runtime config to "nodejs" (supported value) for bumps/listings APIs.
+29/11 10:39 Moved listings loader into lib/server and updated API imports to fix missing module in prod.
+29/11 10:47 Resolved all lint errors by tightening bump types, Map deps, Tailwind import, and suppressing shared shadcn helper warnings.

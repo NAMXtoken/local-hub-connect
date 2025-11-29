@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- context + hook exported from same module */
 import { createContext, useContext, useEffect, useState } from "react";
 
 type ViewMode = "classic" | "explorer";

@@ -153,7 +153,7 @@ export const DirectoryMap = ({ listings, className, onVisibleListingsChange }: D
         map.off("zoomend", notifyVisible);
       }
     };
-  }, [points]);
+  }, [points, onVisibleListingsChange]);
 
   const containerClass = cn(
     "relative h-96 rounded-xl overflow-hidden border",

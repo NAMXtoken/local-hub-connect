@@ -1,7 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { loadListings, type ListingRecord } from './listings';
+import { loadListings, type ListingRecord } from '../lib/server/listings.js';
+
+function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+  return Boolean(error) && typeof error === 'object' && 'code' in (error as Record<string, unknown>);
+}
 
 interface BumpRecord {
   listingId: string;
@@ -54,8 +58,8 @@ async function readBumps(): Promise<BumpRecord[]> {
   try {
     const raw = await fs.readFile(DATA_PATH, 'utf8');
     return JSON.parse(raw) as BumpRecord[];
-  } catch (error: any) {
-    if (error.code === 'ENOENT') {
+  } catch (error: unknown) {
+    if (isNodeError(error) && error.code === 'ENOENT') {
       await fs.mkdir(path.dirname(DATA_PATH), { recursive: true });
       await fs.writeFile(DATA_PATH, '[]', 'utf8');
       return [];
@@ -215,7 +219,7 @@ async function sendLeaderboard(records: BumpRecord[], req: VercelRequest, res: V
     leaderboard = aggregateCounts(records, 0);
   }
 
-  let listingMap = new Map<string, ListingRecord>();
+  const listingMap = new Map<string, ListingRecord>();
   try {
     const listings = await loadListings();
     listings.forEach((listing) => listingMap.set(listing.slug, listing));

@@ -76,7 +76,8 @@ const Directory = () => {
     { enabled: !noFiltersActive }
   );
 
-  const listingData = (noFiltersActive ? baseQuery.data : filteredQuery.data) ?? [];
+  const activeData = noFiltersActive ? baseQuery.data : filteredQuery.data;
+  const listingData = useMemo(() => activeData ?? [], [activeData]);
   const isLoading = noFiltersActive ? baseQuery.isLoading : filteredQuery.isLoading;
   const isError = noFiltersActive ? baseQuery.isError : filteredQuery.isError;
   const totalCount = listingData.length;

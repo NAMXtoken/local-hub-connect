@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- file intentionally exports helper variants alongside components */
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 

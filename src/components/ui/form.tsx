@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- shared form helpers/components exported together intentionally */
 import * as React from "react";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";

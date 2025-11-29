@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { localBumpLeaderboard, localBumpStats, localCreateBump } from "@/lib/local-bump-store";
+import type { BumpMutationError, BumpMutationResponse, BumpMutationErrorDetails } from "@/types/bumps";
 
 interface BumpStatsResponse {
   slug: string;
@@ -31,6 +32,56 @@ interface LeaderboardResponse {
   timeframe: string;
   items: LeaderboardItem[];
 }
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const parseJson = (text: string): unknown => {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+};
+
+const normalizeSuccessPayload = (payload: unknown): BumpMutationResponse => {
+  if (!isRecord(payload)) {
+    return { success: true };
+  }
+
+  const success = typeof payload.success === "boolean" ? payload.success : true;
+  const nextAvailableAt = typeof payload.nextAvailableAt === "number" ? payload.nextAvailableAt : undefined;
+  const source = typeof payload.source === "string" ? payload.source : undefined;
+  return { success, nextAvailableAt, source };
+};
+
+const buildBumpError = (status: number, body: unknown, rawText: string): BumpMutationError => {
+  const defaultMessage = `Unable to bump (status ${status})`;
+  let message = defaultMessage;
+  const details: BumpMutationErrorDetails = rawText ? { raw: rawText } : {};
+
+  if (isRecord(body)) {
+    for (const [key, value] of Object.entries(body)) {
+      if (key === "error") {
+        if (typeof value === "string") {
+          message = value;
+          details.error = value;
+        }
+        continue;
+      }
+      if (key === "nextAvailableAt" && typeof value === "number") {
+        details.nextAvailableAt = value;
+        continue;
+      }
+      (details as Record<string, unknown>)[key] = value;
+    }
+  }
+
+  const error: BumpMutationError = new Error(message);
+  error.status = status;
+  error.details = details;
+  return error;
+};
 
 export const useBumpStats = (slug?: string, userId?: string | null) => {
   return useQuery<BumpStatsResponse>({
@@ -82,34 +133,21 @@ export const useBumpLeaderboard = () => {
 export const useBumpMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: BumpRequest) => {
+    mutationFn: async (payload: BumpRequest): Promise<BumpMutationResponse> => {
       const response = await fetch("/api/bumps", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       const text = await response.text();
-      let data: any = null;
-      if (text) {
-        try {
-          data = JSON.parse(text);
-        } catch (error) {
-          console.error("Failed to parse bumps response", error, text);
-        }
-      }
+      const parsed = text ? parseJson(text) : null;
       if (!response.ok) {
         if (response.status === 404 && typeof window !== "undefined") {
           return localCreateBump(payload);
         }
-        const error = new Error(data?.error ?? `Unable to bump (status ${response.status})`) as Error & {
-          details?: any;
-          status?: number;
-        };
-        error.details = data ?? { raw: text };
-        error.status = response.status;
-        throw error;
+        throw buildBumpError(response.status, parsed, text);
       }
-      return (data ?? { success: true }) as { success: boolean; nextAvailableAt?: number; source?: string };
+      return normalizeSuccessPayload(parsed);
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["bumps", "stats", variables.slug, variables.userId] });
