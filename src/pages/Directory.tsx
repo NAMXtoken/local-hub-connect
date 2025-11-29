@@ -7,12 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronDown } from "lucide-react";
 import { useListings } from "@/hooks/use-listings";
+import { useBumpLeaderboard } from "@/hooks/use-bumps";
 import { useLayoutPreference } from "@/contexts/layout-preference";
 import { useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 
+const DEFAULT_CATEGORY = "Food & Beverage";
+
 const defaultFilterState: FilterState = {
-  categories: [],
+  categories: [DEFAULT_CATEGORY],
   locations: [],
   search: "",
   distance: 10,
@@ -47,14 +50,29 @@ const arraysEqual = (a: string[], b: string[]) => {
   return a.every((value, index) => value === b[index]);
 };
 
+const enforceCategorySelection = (categories: string[]) => (categories.length ? categories : [...defaultFilterState.categories]);
+
+const withRequiredCategory = (state: FilterState): FilterState => ({
+  ...state,
+  categories: enforceCategorySelection(state.categories),
+});
+
 const Directory = () => {
   const [searchParams] = useSearchParams();
   const { viewMode } = useLayoutPreference();
   const initialFiltersFromQuery = parseFiltersFromParams(searchParams);
-  const [filters, setFilters] = useState<FilterState>({
-    ...defaultFilterState,
-    ...initialFiltersFromQuery,
-  });
+  const [filters, setFiltersState] = useState<FilterState>(() =>
+    withRequiredCategory({
+      ...defaultFilterState,
+      ...initialFiltersFromQuery,
+    })
+  );
+  const setFilters = (updater: FilterState | ((prev: FilterState) => FilterState)) => {
+    setFiltersState((prev) => {
+      const next = typeof updater === "function" ? (updater as (value: FilterState) => FilterState)(prev) : updater;
+      return withRequiredCategory(next);
+    });
+  };
 
   const noFiltersActive =
     filters.categories.length === 0 &&
@@ -76,15 +94,31 @@ const Directory = () => {
     { enabled: !noFiltersActive }
   );
 
+  const { data: leaderboardData } = useBumpLeaderboard({ limit: 500 });
+
   const activeData = noFiltersActive ? baseQuery.data : filteredQuery.data;
   const listingData = useMemo(() => activeData ?? [], [activeData]);
   const isLoading = noFiltersActive ? baseQuery.isLoading : filteredQuery.isLoading;
   const isError = noFiltersActive ? baseQuery.isError : filteredQuery.isError;
   const totalCount = listingData.length;
 
+  const bumpCountMap = useMemo(() => {
+    const map = new Map<string, number>();
+    leaderboardData?.items.forEach((item) => {
+      map.set(item.slug, item.count);
+    });
+    return map;
+  }, [leaderboardData]);
+
   const sortedListingData = useMemo(() => {
-    return [...listingData].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-  }, [listingData]);
+    return [...listingData].sort((a, b) => {
+      const bumpDiff = (bumpCountMap.get(b.slug) ?? 0) - (bumpCountMap.get(a.slug) ?? 0);
+      if (bumpDiff !== 0) {
+        return bumpDiff;
+      }
+      return (a.name || "").localeCompare(b.name || "");
+    });
+  }, [listingData, bumpCountMap]);
 
   const availableCategories = useMemo(() => {
     const source = baseQuery.data ?? listingData;
@@ -95,6 +129,7 @@ const Directory = () => {
         set.add(category);
       }
     });
+    defaultFilterState.categories.forEach((category) => set.add(category));
     return Array.from(set).sort();
   }, [baseQuery.data, listingData]);
 
@@ -170,9 +205,9 @@ const Directory = () => {
           priceRange: null,
           phone: listing.contacts?.phone?.[0],
           isOpen: true,
-          bumps: 0,
+          bumps: bumpCountMap.get(listing.slug) ?? 0,
         })),
-    [sortedListingData]
+    [sortedListingData, bumpCountMap]
   );
 
   const classicLayout = (
@@ -192,6 +227,7 @@ const Directory = () => {
             filters={filters}
             categories={availableCategories}
             locations={availableLocations}
+            defaultCategories={defaultFilterState.categories}
             onChange={setFilters}
           />
         </aside>
@@ -246,26 +282,28 @@ const Directory = () => {
 
       <div className="flex-1 relative h-[360px] lg:h-full">
         <div className="lg:fixed lg:right-0 lg:top-16 lg:bottom-0 lg:left-[420px] xl:left-[480px]">
-          <DirectoryMap
-            listings={listingData}
-            className="h-[360px] lg:h-full w-full rounded-none border-0"
-            onVisibleListingsChange={setVisibleListingIds}
-          />
-        </div>
-        <div className="pointer-events-none absolute top-4 left-4 right-4 flex flex-col gap-3">
-          <div className="pointer-events-auto bg-background/95 backdrop-blur rounded-2xl shadow-lg border px-4 py-3">
-            <ExplorerFilterBar
-              filters={filters}
-              categories={availableCategories}
-              locations={availableLocations}
-              onApply={applyExplorerFilters}
+          <div className="relative h-[360px] lg:h-full w-full">
+            <DirectoryMap
+              listings={listingData}
+              className="h-full w-full rounded-none border-0"
+              onVisibleListingsChange={setVisibleListingIds}
             />
-          </div>
-        </div>
-        <div className="pointer-events-none hidden lg:block absolute bottom-6 right-6">
-          <div className="pointer-events-auto bg-background/90 backdrop-blur rounded-2xl shadow-lg px-5 py-4">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Viewing</p>
-            <p className="text-lg font-semibold text-foreground">{explorerCount} listings on map</p>
+            <div className="pointer-events-none absolute top-4 left-4 right-4 flex flex-col gap-3">
+              <div className="pointer-events-auto bg-background/95 backdrop-blur rounded-2xl shadow-lg border px-4 py-3">
+                <ExplorerFilterBar
+                  filters={filters}
+                  categories={availableCategories}
+                  locations={availableLocations}
+                  onApply={applyExplorerFilters}
+                />
+              </div>
+            </div>
+            <div className="pointer-events-none hidden lg:block absolute bottom-6 right-6">
+              <div className="pointer-events-auto bg-background/90 backdrop-blur rounded-2xl shadow-lg px-5 py-4">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Viewing</p>
+                <p className="text-lg font-semibold text-foreground">{explorerCount} listings on map</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -297,7 +335,8 @@ interface SelectFieldProps {
   label: string;
   value: string;
   options: string[];
-  emptyLabel: string;
+  emptyLabel?: string;
+  allowEmpty?: boolean;
   disabled?: boolean;
   onChange: (next: string) => void;
 }
@@ -321,9 +360,12 @@ const ExplorerFilterBar = ({ filters, categories, locations, onApply }: Explorer
 
   const handleSubmit = (event?: React.FormEvent) => {
     event?.preventDefault();
+    const resolvedCategory = categories.includes(categoryValue)
+      ? categoryValue
+      : filters.categories[0] ?? categories[0] ?? defaultFilterState.categories[0];
     onApply({
       search: searchValue.trim(),
-      categories: categoryValue ? [categoryValue] : [],
+      categories: resolvedCategory ? [resolvedCategory] : [],
       locations: locationValue ? [locationValue] : [],
     });
   };
@@ -348,9 +390,9 @@ const ExplorerFilterBar = ({ filters, categories, locations, onApply }: Explorer
 
       <SelectField
         label="Category"
-        value={selectedCategory}
+        value={selectedCategory || filters.categories[0] || ""}
         options={categories}
-        emptyLabel="All Categories"
+        allowEmpty={false}
         onChange={setCategoryValue}
         disabled={categories.length === 0}
       />
@@ -359,7 +401,7 @@ const ExplorerFilterBar = ({ filters, categories, locations, onApply }: Explorer
         label="Location"
         value={selectedLocation}
         options={locations}
-        emptyLabel="All Locations"
+        emptyLabel="Island Wide"
         onChange={setLocationValue}
         disabled={locations.length === 0}
       />
@@ -373,7 +415,7 @@ const ExplorerFilterBar = ({ filters, categories, locations, onApply }: Explorer
   );
 };
 
-const SelectField = ({ label, value, options, emptyLabel, disabled, onChange }: SelectFieldProps) => {
+const SelectField = ({ label, value, options, emptyLabel = "Select", allowEmpty = true, disabled, onChange }: SelectFieldProps) => {
   return (
     <div className="flex flex-col w-full lg:max-w-xs gap-1">
       <span className="text-xs font-semibold text-muted-foreground">{label}</span>
@@ -384,7 +426,7 @@ const SelectField = ({ label, value, options, emptyLabel, disabled, onChange }: 
           onChange={(event) => onChange(event.target.value)}
           disabled={disabled}
         >
-          <option value="">{emptyLabel}</option>
+          {allowEmpty && <option value="">{emptyLabel}</option>}
           {options.map((option) => (
             <option key={option} value={option}>
               {option}

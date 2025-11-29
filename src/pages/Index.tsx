@@ -1,40 +1,18 @@
+import { useMemo } from "react";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
-import { CategoryGrid } from "@/components/CategoryGrid";
-import { Leaderboard } from "@/components/Leaderboard";
+import { CategoryGrid, DIRECTORY_CATEGORIES } from "@/components/CategoryGrid";
+import { Leaderboard, type LeaderboardSection } from "@/components/Leaderboard";
 import { BusinessCard } from "@/components/BusinessCard";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { slugify } from "@/lib/utils";
 import { useListings } from "@/hooks/use-listings";
-import { useBumpLeaderboard } from "@/hooks/use-bumps";
+import { useBumpLeaderboard, type LeaderboardItem } from "@/hooks/use-bumps";
+import type { Listing } from "@/lib/api";
 
 const withSlugs = <T extends { name: string }>(items: T[]) =>
   items.map((item) => ({ ...item, slug: slugify(item.name) }));
-
-const placeholderLeaderboard = withSlugs([
-  {
-    id: "placeholder-1",
-    name: "Community Favorite",
-    category: "Local Business",
-    image: "https://placehold.co/600x400?text=Samui+Connect",
-    bumps: 12,
-  },
-  {
-    id: "placeholder-2",
-    name: "Island Classic",
-    category: "Food & Beverage",
-    image: "https://placehold.co/600x400?text=Samui+Connect",
-    bumps: 9,
-  },
-  {
-    id: "placeholder-3",
-    name: "Hidden Gem",
-    category: "Things To Do",
-    image: "https://placehold.co/600x400?text=Samui+Connect",
-    bumps: 7,
-  },
-]);
 
 const placeholderFeatured = withSlugs([
   {
@@ -78,11 +56,21 @@ const placeholderFeatured = withSlugs([
   },
 ]);
 
+const FEATURED_CATEGORY_NAMES = DIRECTORY_CATEGORIES.map((category) => category.name);
+
+const normalizeCategory = (value?: string | null) => value?.toLowerCase().trim() ?? "";
+
+const FEATURED_CATEGORY_SET = new Set(FEATURED_CATEGORY_NAMES.map((name) => normalizeCategory(name)));
+const CATEGORY_NAME_BY_KEY = new Map(
+  FEATURED_CATEGORY_NAMES.map((name) => [normalizeCategory(name), name] as const)
+);
+
 const Index = () => {
   const { data: listings = [], isLoading } = useListings();
-  const { data: leaderboardData, isLoading: leaderboardLoading } = useBumpLeaderboard();
-  const leaderboardItems = leaderboardData?.items ?? placeholderLeaderboard;
+  const { data: leaderboardData, isLoading: leaderboardLoading } = useBumpLeaderboard({ limit: 500 });
+  const leaderboardItems = leaderboardData?.items ?? [];
   const leaderboardTimeframe = leaderboardData?.timeframe ?? "24 hours";
+  const categoryCounts = useMemo(() => buildCategoryCounts(listings), [listings]);
 
   const featuredBusinesses = listings.length
     ? listings.slice(0, 3).map((listing) => ({
@@ -104,13 +92,13 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <Hero />
-      <CategoryGrid />
+      <CategoryGrid counts={categoryCounts} />
       <Leaderboard
-        items={leaderboardItems}
+        sections={useLeaderboardSections(listings, leaderboardItems)}
         timeframe={leaderboardTimeframe}
         isLoading={leaderboardLoading}
       />
-      
+
       {/* Featured Businesses */}
       <section className="py-16">
         <div className="container mx-auto px-4">
@@ -140,3 +128,116 @@ const Index = () => {
 };
 
 export default Index;
+
+function buildCategoryCounts(listings: Listing[]): Record<string, number> {
+  const counts = new Map<string, number>(FEATURED_CATEGORY_NAMES.map((name) => [name, 0] as const));
+  listings.forEach((listing) => {
+    const matchedKeys = new Set<string>();
+    if (listing.primaryCategory) {
+      matchedKeys.add(normalizeCategory(listing.primaryCategory));
+    }
+    listing.tags.forEach((tag) => matchedKeys.add(normalizeCategory(tag)));
+
+    matchedKeys.forEach((key) => {
+      const displayName = CATEGORY_NAME_BY_KEY.get(key);
+      if (!displayName) {
+        return;
+      }
+      counts.set(displayName, (counts.get(displayName) ?? 0) + 1);
+    });
+  });
+  return Object.fromEntries(counts);
+}
+
+function useLeaderboardSections(listings: Listing[], leaderboardItems: LeaderboardItem[]): LeaderboardSection[] {
+  const listingsByCategory = useMemo(() => groupListingsByCategory(listings), [listings]);
+  const bumpEntriesByCategory = useMemo(() => groupLeaderboardByCategory(leaderboardItems), [leaderboardItems]);
+
+  return FEATURED_CATEGORY_NAMES.map((categoryName) => {
+    const normalized = normalizeCategory(categoryName);
+    const bumpEntries = (bumpEntriesByCategory.get(normalized) ?? []).slice(0, 3);
+    const selections: LeaderboardItem[] = [...bumpEntries];
+
+    if (selections.length < 3) {
+      const fallbackListings = listingsByCategory.get(normalized) ?? [];
+      for (const listing of fallbackListings) {
+        if (selections.some((entry) => entry.slug === listing.slug)) {
+          continue;
+        }
+        selections.push(convertListingToLeaderboardItem(listing, categoryName));
+        if (selections.length === 3) {
+          break;
+        }
+      }
+    }
+
+    return {
+      category: categoryName,
+      businesses: selections,
+    } satisfies LeaderboardSection;
+  });
+}
+
+function groupListingsByCategory(listings: Listing[]) {
+  const map = new Map<string, Listing[]>();
+  listings.forEach((listing) => {
+    const candidates = new Set<string>();
+    if (listing.primaryCategory) {
+      candidates.add(listing.primaryCategory);
+    }
+    listing.tags.forEach((tag) => candidates.add(tag));
+
+    candidates.forEach((candidate) => {
+      const normalized = normalizeCategory(candidate);
+      if (!FEATURED_CATEGORY_SET.has(normalized)) {
+        return;
+      }
+      const bucket = map.get(normalized) ?? [];
+      bucket.push(listing);
+      map.set(normalized, bucket);
+    });
+  });
+
+  map.forEach((bucket, key) => {
+    bucket.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    map.set(key, bucket);
+  });
+
+  return map;
+}
+
+function groupLeaderboardByCategory(items: LeaderboardItem[]) {
+  const map = new Map<string, LeaderboardItem[]>();
+  items.forEach((item) => {
+    const normalized = normalizeCategory(item.category);
+    if (!FEATURED_CATEGORY_SET.has(normalized)) {
+      return;
+    }
+    const bucket = map.get(normalized) ?? [];
+    bucket.push(item);
+    map.set(normalized, bucket);
+  });
+
+  map.forEach((bucket, key) => {
+    bucket.sort((a, b) => {
+      if (b.count !== a.count) {
+        return b.count - a.count;
+      }
+      return (a.name || "").localeCompare(b.name || "");
+    });
+    map.set(key, bucket);
+  });
+
+  return map;
+}
+
+function convertListingToLeaderboardItem(listing: Listing, categoryName: string): LeaderboardItem {
+  return {
+    slug: listing.slug,
+    listingId: listing.id,
+    name: listing.name || "Untitled Listing",
+    category: categoryName,
+    image: listing.imageUrl || listing.remoteImageUrl,
+    count: 0,
+  };
+}

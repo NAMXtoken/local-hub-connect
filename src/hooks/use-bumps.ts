@@ -109,12 +109,21 @@ export const useBumpStats = (slug?: string, userId?: string | null) => {
   });
 };
 
-export const useBumpLeaderboard = () => {
+interface LeaderboardOptions {
+  limit?: number;
+}
+
+export const useBumpLeaderboard = (options?: LeaderboardOptions) => {
+  const params = new URLSearchParams({ leaderboard: "1" });
+  if (options?.limit) {
+    params.set("limit", String(options.limit));
+  }
+
   return useQuery<LeaderboardResponse>({
-    queryKey: ["bumps", "leaderboard"],
+    queryKey: ["bumps", "leaderboard", options?.limit ?? "default"],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/bumps?leaderboard=1`);
+        const response = await fetch(`/api/bumps?${params.toString()}`);
         if (!response.ok) {
           throw new Error("Failed to load leaderboard");
         }

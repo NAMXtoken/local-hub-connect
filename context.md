@@ -45,3 +45,14 @@
 28/11 23:37 Corrected Vercel runtime config to "nodejs" (supported value) for bumps/listings APIs.
 29/11 10:39 Moved listings loader into lib/server and updated API imports to fix missing module in prod.
 29/11 10:47 Resolved all lint errors by tightening bump types, Map deps, Tailwind import, and suppressing shared shadcn helper warnings.
+29/11 11:04 Defaulted directory filters to Food & Beverage, removed All Categories option, and renamed All Locations to Island Wide.
+29/11 11:08 Aligned default directory category with existing 'Food & Beverage' option to avoid duplicate filters.
+29/11 11:10 Moved explorer overlay into fixed map container so filters stay pinned when scrolling.
+29/11 11:14 Sorted directory listings by bump leaderboard counts so highest-engagement businesses show first.
+29/11 11:18 Allowed directory to fetch extended bump leaderboard (limit 500) so Food & Beverage stays ordered by live counts.
+29/11 11:20 Removed homepage Featured Businesses filler section now that live leaderboard handles discovery.
+29/11 11:22 Restored homepage featured section and removed Top Loved placeholder data so leaderboard only shows live bumps.
+29/11 11:25 Leaderboard hook now falls back to production API origin so home/dir views show live bump data even when local functions are empty.
+29/11 11:28 Reverted leaderboard hook to local API + fallback only so existing bump flows behave like before while keeping placeholders removed.
+29/11 11:34 Rebuilt homepage leaderboard to always show 8 key categories with bump-sorted results and alphabetical fallbacks per category.
+29/11 11:39 Category grid counts now reflect actual listing totals per featured category (with dynamic data fallback).

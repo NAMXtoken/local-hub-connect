@@ -1,8 +1,9 @@
+/* eslint-disable react-refresh/only-export-components -- shares category metadata alongside component */
 import { Utensils, BedDouble, ShoppingBag, Sparkles, Briefcase, Map, Wine, Home } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 
-const categories = [
+export const DIRECTORY_CATEGORIES = [
   { name: "Food & Beverage", icon: Utensils, count: 548, color: "bg-red-500" },
   { name: "Accommodation", icon: BedDouble, count: 300, color: "bg-indigo-500" },
   { name: "Shopping", icon: ShoppingBag, count: 95, color: "bg-pink-500" },
@@ -13,7 +14,11 @@ const categories = [
   { name: "Property Services", icon: Home, count: 67, color: "bg-orange-500" },
 ];
 
-export const CategoryGrid = () => {
+interface CategoryGridProps {
+  counts?: Record<string, number>;
+}
+
+export const CategoryGrid = ({ counts }: CategoryGridProps) => {
   return (
     <section className="py-16 bg-secondary/30">
       <div className="container mx-auto px-4">
@@ -27,9 +32,10 @@ export const CategoryGrid = () => {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {categories.map((category) => {
+          {DIRECTORY_CATEGORIES.map((category) => {
             const Icon = category.icon;
             const categoryQuery = new URLSearchParams({ category: category.name }).toString();
+            const total = counts?.[category.name] ?? 0;
             return (
               <Link key={category.name} to={`/directory?${categoryQuery}`}>
                 <Card className="p-6 hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
@@ -39,7 +45,7 @@ export const CategoryGrid = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground">{category.name}</h3>
-                      <p className="text-sm text-muted-foreground">{category.count} businesses</p>
+                      <p className="text-sm text-muted-foreground">{total} businesses</p>
                     </div>
                   </div>
                 </Card>

@@ -20,17 +20,24 @@ interface FilterSidebarProps {
   filters: FilterState;
   categories: string[];
   locations: string[];
+  defaultCategories: string[];
   onChange: (next: FilterState) => void;
 }
+
+const arraysEqual = (a: string[], b: string[]) => {
+  if (a.length !== b.length) return false;
+  return a.every((value, index) => value === b[index]);
+};
 
 const toggleValue = (values: string[], value: string) =>
   values.includes(value)
     ? values.filter((entry) => entry !== value)
     : [...values, value];
 
-export const FilterSidebar = ({ filters, categories, locations, onChange }: FilterSidebarProps) => {
+export const FilterSidebar = ({ filters, categories, locations, defaultCategories, onChange }: FilterSidebarProps) => {
+  const categoriesMatchDefault = arraysEqual(filters.categories, defaultCategories);
   const hasActiveFilters =
-    filters.categories.length > 0 ||
+    !categoriesMatchDefault ||
     filters.locations.length > 0 ||
     Boolean(filters.search.trim()) ||
     filters.distance !== 10 ||
@@ -52,7 +59,7 @@ export const FilterSidebar = ({ filters, categories, locations, onChange }: Filt
             size="sm"
             onClick={() =>
               onChange({
-                categories: [],
+                categories: [...defaultCategories],
                 locations: [],
                 search: "",
                 distance: 10,
