@@ -15,6 +15,7 @@ export interface Listing {
   mapLongitude?: string;
   description: string;
   contacts: Record<string, string[]>;
+  featuredInstagramPosts?: string[];
 }
 
 export interface ListingFilters {
@@ -95,7 +96,11 @@ export async function fetchListings(filters?: ListingFilters): Promise<Listing[]
   } catch (error) {
     const fallback = await fetch('/data/listings.json');
     const all = await handleResponse<Listing[]>(fallback);
-    return applyFilters(all, filters);
+    const custom = await fetchCustomListingsFallback();
+    const combined = [...all, ...(custom ?? [])];
+    const claims = await fetchClaimsFallback();
+    const merged = claims ? mergeClaims(combined, claims) : combined;
+    return applyFilters(merged, filters);
   }
 }
 
@@ -111,4 +116,69 @@ export async function fetchListingBySlug(slug: string): Promise<Listing> {
     }
     return match;
   }
+}
+
+async function fetchClaimsFallback(): Promise<Record<string, ListingClaim> | null> {
+  try {
+    const response = await fetch('/data/listing-claims.json');
+    if (!response.ok) {
+      return null;
+    }
+    return (await response.json()) as Record<string, ListingClaim>;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchCustomListingsFallback(): Promise<Listing[] | null> {
+  try {
+    const response = await fetch('/data/custom-listings.json');
+    if (!response.ok) {
+      return null;
+    }
+    return (await response.json()) as Listing[];
+  } catch {
+    return null;
+  }
+}
+
+function mergeClaims(listings: Listing[], claims: Record<string, ListingClaim>): Listing[] {
+  return listings.map((listing) => applyClaim(listing, claims[listing.slug]));
+}
+
+function applyClaim(listing: Listing, claim?: ListingClaim): Listing {
+  if (!claim) {
+    return listing;
+  }
+  const next: Listing = {
+    ...listing,
+    contacts: { ...listing.contacts },
+  };
+  if (claim.name) next.name = claim.name;
+  if (claim.primaryCategory) next.primaryCategory = claim.primaryCategory;
+  if (claim.location) next.location = claim.location;
+  if (claim.address) next.address = claim.address;
+  if (claim.description) next.description = claim.description;
+  if (claim.website) next.contacts = { ...next.contacts, website: [claim.website] };
+  if (claim.phone) next.contacts = { ...next.contacts, phone: [claim.phone] };
+  if (claim.email) next.contacts = { ...next.contacts, email: [claim.email] };
+  if (claim.instagramPosts?.length) {
+    const filtered = claim.instagramPosts.filter((url) => url.trim().length > 0);
+    if (filtered.length) {
+      next.featuredInstagramPosts = filtered;
+    }
+  }
+  return next;
+}
+
+interface ListingClaim {
+  name?: string;
+  primaryCategory?: string;
+  location?: string;
+  address?: string;
+  description?: string;
+  website?: string;
+  phone?: string;
+  email?: string;
+  instagramPosts?: string[];
 }

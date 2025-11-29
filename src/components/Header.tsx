@@ -1,12 +1,14 @@
 import { Search, Menu, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useLayoutPreference } from "@/contexts/layout-preference";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { viewMode, setViewMode } = useLayoutPreference();
+  const location = useLocation();
+  const isDirectoryRoute = location.pathname.startsWith("/directory");
 
   const ViewToggle = (
     <div className="hidden md:flex items-center gap-1 rounded-full border border-border p-1 bg-background/80">
@@ -47,15 +49,12 @@ export const Header = () => {
             <Link to="/directory" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
               Directory
             </Link>
-            <Link to="/categories" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
-              Categories
-            </Link>
-            <Button variant="default" size="sm">
-              Add Business
+            <Button variant="default" size="sm" asChild>
+              <Link to="/business/new">Add Business</Link>
             </Button>
           </nav>
 
-          {ViewToggle}
+          {isDirectoryRoute && ViewToggle}
 
           <Button
             variant="ghost"
@@ -76,12 +75,10 @@ export const Header = () => {
               <Link to="/directory" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
                 Directory
               </Link>
-              <Link to="/categories" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
-                Categories
-              </Link>
-              <Button variant="default" size="sm" className="w-full">
-                Add Business
+              <Button variant="default" size="sm" className="w-full" asChild>
+                <Link to="/business/new">Add Business</Link>
               </Button>
+            {isDirectoryRoute && (
               <div className="pt-4 border-t border-border">
                 <p className="text-xs font-semibold text-muted-foreground mb-2">Directory view</p>
                 <div className="flex items-center gap-2">
@@ -103,6 +100,7 @@ export const Header = () => {
                   </Button>
                 </div>
               </div>
+            )}
             </nav>
           </div>
         )}

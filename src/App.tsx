@@ -7,6 +7,7 @@ import { LayoutPreferenceProvider } from "@/contexts/layout-preference";
 import Index from "./pages/Index";
 import Directory from "./pages/Directory";
 import BusinessDetail from "./pages/BusinessDetail";
+import ClaimBusiness from "./pages/ClaimBusiness";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +22,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/directory" element={<Directory />} />
+            <Route path="/business/new" element={<ClaimBusiness mode="create" />} />
+            <Route path="/business/:slug/claim" element={<ClaimBusiness />} />
             <Route path="/business/:slug" element={<BusinessDetail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

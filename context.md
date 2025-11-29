@@ -60,3 +60,13 @@
 29/11 13:24 Swapped business contact info for clickable buttons (tel/mail/WhatsApp/Line links).
 29/11 13:42 Added Instagram Basic Display serverless API with token storage and setup docs.
 29/11 13:47 Added CLI helper to run the Instagram OAuth flow locally and store tokens.
+29/11 15:56 Added Claim Profile flow with form & IG post fields plus CTA on business pages and routing.
+29/11 16:07 Claim submissions now persist via /api/claims and override listings immediately (stored in data/listing-claims.json).
+29/11 16:29 Added shared claim parser + Vite dev middleware so /api/claims works locally and data writes persist to listing-claims.json.
+29/11 16:54 Client-side listing fallback now merges claim overrides (incl. IG posts) so changes appear immediately even in dev mode.
+29/11 16:56 Business pages now render claimed Instagram posts via iframe grid (fallback link if embed fails).
+29/11 16:59 Refined Instagram embed iframes to be borderless, fixed-height, and scrolling-free for cleaner tiles.
+29/11 17:10 Added new-business flow (Add Business button, /business/new route, API + storage) reusing claim form + custom listings merge.
+29/11 17:32 Add business/claim form now uses dropdowns for category/location with predefined options for consistency.
+29/11 17:34 Removed dormant Categories nav link from header so only live routes remain.
+29/11 17:35 Header only shows Classic/Explorer toggle while browsing /directory (desktop + mobile).

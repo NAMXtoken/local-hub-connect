@@ -2,7 +2,8 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Phone, Globe, Mail, Share2, Heart, Instagram, Facebook, Map } from "lucide-react";
+import { MapPin, Phone, Globe, Mail, Share2, Heart, Instagram, Facebook, Map, Image as ImageIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useListing } from "@/hooks/use-listings";
@@ -71,6 +72,25 @@ const buildContactHref = (type: ContactType, rawValue: string): string | null =>
     }
     default:
       return null;
+  }
+};
+
+const extractInstagramEmbed = (postUrl: string): string | null => {
+  try {
+    const parsed = new URL(postUrl);
+    const segments = parsed.pathname.split("/").filter(Boolean);
+    if (segments.length < 2) {
+      return null;
+    }
+    const [type, shortcode] = segments;
+    const valid = ["p", "reel", "tv"];
+    if (!valid.includes(type)) {
+      return null;
+    }
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://instagram.com";
+    return `https://www.instagram.com/${type}/${shortcode}/embed/?cr=1&v=14&wp=540&rd=${encodeURIComponent(origin)}`;
+  } catch {
+    return null;
   }
 };
 
@@ -189,9 +209,14 @@ const buildContactHref = (type: ContactType, rawValue: string): string | null =>
                     </div>
                   )}
                 </div>
-                <Button variant="outline" size="icon">
-                  <Share2 className="h-5 w-5" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="icon" aria-label="Share listing">
+                    <Share2 className="h-5 w-5" />
+                  </Button>
+                  <Button variant="secondary" asChild>
+                    <Link to={`/business/${listing.slug}/claim`}>Claim this profile</Link>
+                  </Button>
+                </div>
               </div>
               {listing.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -263,6 +288,49 @@ const buildContactHref = (type: ContactType, rawValue: string): string | null =>
                 Show your appreciation for great service and help this business gain visibility in the directory!
               </p>
             </Card>
+
+            {listing.featuredInstagramPosts?.length ? (
+              <Card className="p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <Instagram className="h-5 w-5 text-primary" />
+                  <h2 className="text-xl font-semibold text-foreground">Instagram Highlights</h2>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Posts shared directly by the business. Tap a tile to open the original on Instagram.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {listing.featuredInstagramPosts.slice(0, 6).map((postUrl, index) => {
+                    const embedSrc = extractInstagramEmbed(postUrl);
+                    return (
+                      <div key={`${postUrl}-${index}`} className="rounded-xl border overflow-hidden bg-muted/30">
+                        {embedSrc ? (
+                          <iframe
+                            title={`Instagram post ${index + 1}`}
+                            src={embedSrc}
+                            className="w-full"
+                            style={{ border: "none", minHeight: 520 }}
+                            loading="lazy"
+                            allow="encrypted-media"
+                            scrolling="no"
+                            frameBorder={0}
+                          />
+                        ) : (
+                          <a
+                            href={postUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex flex-col items-center justify-center gap-3 p-6 text-center text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <ImageIcon className="h-8 w-8" />
+                            <span className="text-xs break-all">{postUrl}</span>
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            ) : null}
 
             {socialLinks.length > 0 && (
               <Card className="p-6">
