@@ -5,7 +5,7 @@ import { DirectoryListItem } from "@/components/DirectoryListItem";
 import { BusinessCard } from "@/components/BusinessCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useListings } from "@/hooks/use-listings";
 import { useBumpLeaderboard } from "@/hooks/use-bumps";
 import { useLayoutPreference } from "@/contexts/layout-preference";
@@ -83,6 +83,15 @@ const Directory = () => {
   const applyExplorerFilters = (updates: Pick<FilterState, "categories" | "locations" | "search">) => {
     setFilters((prev) => ({ ...prev, ...updates }));
   };
+
+  const isMobile = useIsMobile();
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileFiltersOpen(!isMobile);
+  }, [isMobile]);
+
+  const showExplorerFilters = !isMobile || mobileFiltersOpen;
 
   const baseQuery = useListings();
   const filteredQuery = useListings(
@@ -258,7 +267,59 @@ const Directory = () => {
 
   const explorerLayout = (
     <div className="flex flex-1 flex-col lg:flex-row lg:h-[calc(100vh-64px)]">
-      <aside className="w-full lg:w-[420px] xl:w-[480px] border-b lg:border-r bg-background flex flex-col lg:h-full lg:overflow-hidden">
+      <div className="order-1 lg:order-2 flex-1 relative h-[360px] w-full lg:h-full">
+        <div className="lg:fixed lg:right-0 lg:top-16 lg:bottom-0 lg:left-[420px] xl:left-[480px]">
+          <div className="relative h-[360px] lg:h-full w-full">
+            <DirectoryMap
+              listings={listingData}
+              className="h-full w-full rounded-none border-0"
+              onVisibleListingsChange={setVisibleListingIds}
+            />
+            <div className="absolute top-4 left-4 right-4 flex flex-col items-end gap-3 pointer-events-none">
+              {isMobile && !mobileFiltersOpen && (
+                <button
+                  type="button"
+                  className="pointer-events-auto flex items-center gap-2 rounded-full bg-background/95 px-3 py-2 text-sm font-semibold text-foreground shadow-lg border"
+                  onClick={() => setMobileFiltersOpen(true)}
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Filters
+                </button>
+              )}
+              {showExplorerFilters && (
+                <div className="pointer-events-auto bg-background/95 backdrop-blur rounded-2xl shadow-lg border px-4 py-3 w-full lg:w-auto">
+                  {isMobile && (
+                    <div className="flex justify-end pb-2">
+                      <button
+                        type="button"
+                        aria-label="Close filters"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border text-muted-foreground"
+                        onClick={() => setMobileFiltersOpen(false)}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                  <ExplorerFilterBar
+                    filters={filters}
+                    categories={availableCategories}
+                    locations={availableLocations}
+                    onApply={applyExplorerFilters}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="pointer-events-none hidden lg:block absolute bottom-6 right-6">
+              <div className="pointer-events-auto bg-background/90 backdrop-blur rounded-2xl shadow-lg px-5 py-4">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Viewing</p>
+                <p className="text-lg font-semibold text-foreground">{explorerCount} listings on map</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside className="order-2 lg:order-1 w-full lg:w-[420px] xl:w-[480px] border-b lg:border-r bg-background flex flex-col lg:h-full lg:overflow-hidden">
         <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/30 lg:h-full">
           {isLoading ? (
             <p className="text-muted-foreground">Fetching listings...</p>
@@ -279,34 +340,6 @@ const Directory = () => {
           )}
         </div>
       </aside>
-
-      <div className="flex-1 relative h-[360px] lg:h-full">
-        <div className="lg:fixed lg:right-0 lg:top-16 lg:bottom-0 lg:left-[420px] xl:left-[480px]">
-          <div className="relative h-[360px] lg:h-full w-full">
-            <DirectoryMap
-              listings={listingData}
-              className="h-full w-full rounded-none border-0"
-              onVisibleListingsChange={setVisibleListingIds}
-            />
-            <div className="pointer-events-none absolute top-4 left-4 right-4 flex flex-col gap-3">
-              <div className="pointer-events-auto bg-background/95 backdrop-blur rounded-2xl shadow-lg border px-4 py-3">
-                <ExplorerFilterBar
-                  filters={filters}
-                  categories={availableCategories}
-                  locations={availableLocations}
-                  onApply={applyExplorerFilters}
-                />
-              </div>
-            </div>
-            <div className="pointer-events-none hidden lg:block absolute bottom-6 right-6">
-              <div className="pointer-events-auto bg-background/90 backdrop-blur rounded-2xl shadow-lg px-5 py-4">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Viewing</p>
-                <p className="text-lg font-semibold text-foreground">{explorerCount} listings on map</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 
@@ -339,6 +372,35 @@ interface SelectFieldProps {
   allowEmpty?: boolean;
   disabled?: boolean;
   onChange: (next: string) => void;
+}
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window === "undefined" ? false : window.matchMedia("(max-width: 1023px)").matches
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const media = window.matchMedia("(max-width: 1023px)");
+    const handler = (event: MediaQueryListEvent) => setIsMobile(event.matches);
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", handler);
+    } else {
+      media.addListener(handler);
+    }
+    setIsMobile(media.matches);
+    return () => {
+      if (typeof media.removeEventListener === "function") {
+        media.removeEventListener("change", handler);
+      } else {
+        media.removeListener(handler);
+      }
+    };
+  }, []);
+
+  return isMobile;
 }
 
 const ExplorerFilterBar = ({ filters, categories, locations, onApply }: ExplorerFilterBarProps) => {

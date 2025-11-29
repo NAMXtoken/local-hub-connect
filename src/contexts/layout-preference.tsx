@@ -12,12 +12,20 @@ const LayoutPreferenceContext = createContext<LayoutPreferenceValue | undefined>
 
 const STORAGE_KEY = "samui-connect:view-mode";
 
+const resolveDefaultViewMode = (): ViewMode => {
+  if (typeof window === "undefined") {
+    return "classic";
+  }
+  const stored = window.localStorage.getItem(STORAGE_KEY);
+  if (stored === "explorer" || stored === "classic") {
+    return stored;
+  }
+  const prefersMobileExplorer = window.matchMedia("(max-width: 1023px)").matches;
+  return prefersMobileExplorer ? "explorer" : "classic";
+};
+
 export const LayoutPreferenceProvider = ({ children }: { children: React.ReactNode }) => {
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    if (typeof window === "undefined") return "classic";
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    return stored === "explorer" ? "explorer" : "classic";
-  });
+  const [viewMode, setViewMode] = useState<ViewMode>(() => resolveDefaultViewMode());
 
   useEffect(() => {
     if (typeof window === "undefined") return;

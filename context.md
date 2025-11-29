@@ -71,3 +71,4 @@
 29/11 17:34 Removed dormant Categories nav link from header so only live routes remain.
 29/11 17:35 Header only shows Classic/Explorer toggle while browsing /directory (desktop + mobile).
 29/11 17:46 Ensured serverless modules resolve with .js imports, bundled data folder, and synced claims/custom JSON fallbacks into public data.
+29/11 17:55 Defaulted mobile directory view to Explorer with map-first layout plus collapsible filter button over the map.
