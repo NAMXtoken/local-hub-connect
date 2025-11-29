@@ -37,6 +37,7 @@ function parseBody(body: unknown) {
 
 export const config = {
   runtime: 'nodejs',
+  includeFiles: ['data/**'],
 };
 
 const DATA_PATH = process.env.BUMP_DATA_PATH

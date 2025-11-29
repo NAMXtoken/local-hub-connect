@@ -52,6 +52,7 @@ function matchesSearch(listing: ListingRecord, search: string | undefined): bool
 
 export const config = {
   runtime: 'nodejs',
+  includeFiles: ['data/**'],
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { readClaims, type ListingClaim } from './claims';
-import { readCustomListings, writeCustomListings } from './custom-listings';
+import { readClaims, type ListingClaim } from './claims.js';
+import { readCustomListings, writeCustomListings } from './custom-listings.js';
 
 export interface ListingRecord {
   id: string;

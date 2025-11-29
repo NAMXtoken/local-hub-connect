@@ -111,7 +111,19 @@ def main() -> int:
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(payload, encoding="utf-8")
         print(f"Wrote {len(listings)} listings to {destination}")
+
+    sync_public_data_file(Path("data/listing-claims.json"), Path("public/data/listing-claims.json"), "{}\n")
+    sync_public_data_file(Path("data/custom-listings.json"), Path("public/data/custom-listings.json"), "[]\n")
     return 0
+
+
+def sync_public_data_file(source: Path, destination: Path, default_contents: str) -> None:
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if source.exists():
+        destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    else:
+        destination.write_text(default_contents, encoding="utf-8")
+    print(f"Synced {destination} from {source}")
 
 
 if __name__ == "__main__":
